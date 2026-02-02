@@ -8,7 +8,7 @@ const Home = () => {
 
     return (
         <div className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2rem' }}>
-            <div style={{ textAlign: 'center' }}>
+            <div style={{ textAlign: 'center', marginTop: '2rem' }}>
                 <h1 className="gradient-text" style={{ fontSize: '3rem', marginBottom: '1rem' }}>
                     Share files instantly.
                 </h1>
@@ -22,7 +22,8 @@ const Home = () => {
                 background: 'var(--bg-secondary)',
                 padding: '0.25rem',
                 borderRadius: '12px',
-                border: '1px solid var(--border-color)'
+                border: '1px solid var(--border-color)',
+                marginBottom: '2rem'
             }}>
                 <button
                     onClick={() => setMode('send')}
@@ -54,10 +55,11 @@ const Home = () => {
                 </button>
             </div>
 
-            <div style={{ width: '100%', marginTop: '1rem' }}>
+            <div style={{ width: '100%', marginBottom: '4rem' }}>
                 {mode === 'send' ? <Sender /> : <Receiver />}
             </div>
 
+            {/* Features Section */}
             <Features />
         </div>
     );
