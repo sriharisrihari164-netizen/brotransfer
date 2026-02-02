@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Sender from '../components/Sender';
 import Receiver from '../components/Receiver';
+import Features from '../components/Features';
 
 const Home = () => {
     const [mode, setMode] = useState('send'); // 'send' or 'receive'
@@ -56,6 +57,8 @@ const Home = () => {
             <div style={{ width: '100%', marginTop: '1rem' }}>
                 {mode === 'send' ? <Sender /> : <Receiver />}
             </div>
+
+            <Features />
         </div>
     );
 };
