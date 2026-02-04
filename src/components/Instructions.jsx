@@ -31,27 +31,24 @@ const Instructions = () => {
     );
 
     return (
-        <div style={{
-            maxWidth: '800px',
-            margin: '2rem auto 4rem',
-            padding: '2rem',
-            background: 'var(--bg-secondary)',
-            borderRadius: '16px',
-            border: '1px solid var(--border-color)',
+        <div className="glass-card" style={{
+            maxWidth: '900px',
+            margin: '0 auto',
             display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '2rem'
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: '3rem'
         }}>
             <div>
                 <h3 style={{
-                    color: 'var(--accent-primary)',
+                    color: 'white',
                     marginBottom: '1.5rem',
                     fontSize: '1.5rem',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.5rem'
+                    gap: '0.5rem',
+                    textShadow: '0 2px 10px rgba(0,0,0,0.3)'
                 }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                         <line x1="22" y1="2" x2="11" y2="13"></line>
                         <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                     </svg>
@@ -76,14 +73,15 @@ const Instructions = () => {
 
             <div>
                 <h3 style={{
-                    color: 'var(--accent-primary)',
+                    color: 'white',
                     marginBottom: '1.5rem',
                     fontSize: '1.5rem',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.5rem'
+                    gap: '0.5rem',
+                    textShadow: '0 2px 10px rgba(0,0,0,0.3)'
                 }}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
                     Receiving Files
@@ -96,17 +94,17 @@ const Instructions = () => {
                 <Step
                     number="2"
                     title="Connect"
-                    text="Click 'Connect' to establish a secure peer-to-peer connection."
+                    text="Your device will connect securely to the sender."
                 />
                 <Step
                     number="3"
                     title="Download"
-                    text="The file transfer will start automatically. Accept the download when prompted."
+                    text="The file transfer will start automatically. Saving directly to your device."
                 />
             </div>
 
-            <div style={{ gridColumn: '1 / -1', textAlign: 'center', marginTop: '1rem', paddingTop: '2rem', borderTop: '1px solid var(--border-color)' }}>
-                <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic', opacity: 0.8 }}>
                     Note: Keep the browser tab open until the transfer is complete.
                 </p>
             </div>

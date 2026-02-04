@@ -31,21 +31,18 @@ const FileDrop = ({ onFileSelected }) => {
 
     return (
         <div
-            className={`file-drop-card ${isDragging ? 'dragging' : ''}`}
+            className={`file-drop-card glass-card ${isDragging ? 'dragging' : ''}`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             style={{
-                border: '2px dashed var(--border-color)',
-                borderRadius: '16px',
-                padding: '3rem',
-                textAlign: 'center',
-                background: isDragging ? 'rgba(99, 102, 241, 0.1)' : 'var(--bg-secondary)',
-                borderColor: isDragging ? 'var(--accent-primary)' : 'var(--border-color)',
-                transition: 'all 0.2s ease',
+                borderStyle: 'dashed',
+                borderWidth: '2px',
+                borderColor: isDragging ? 'var(--accent-primary)' : 'rgba(255,255,255,0.2)',
+                background: isDragging ? 'rgba(255, 71, 87, 0.1)' : 'rgba(0,0,0,0.2)',
                 cursor: 'pointer',
                 width: '100%',
-                maxWidth: '600px'
+                transition: 'all 0.3s ease'
             }}
             onClick={() => document.getElementById('fileInput').click()}
         >
@@ -55,14 +52,14 @@ const FileDrop = ({ onFileSelected }) => {
                 style={{ display: 'none' }}
                 onChange={handleFileChange}
             />
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>
+            <div style={{ fontSize: '4rem', marginBottom: '1.5rem', filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.3))' }}>
                 📁
             </div>
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
-                Click or Drag & Drop a file
+            <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: 'white' }}>
+                Click or Drag & Drop
             </h3>
-            <p style={{ color: 'var(--text-secondary)' }}>
-                Transfer files directly to your peers. No size limit.
+            <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem' }}>
+                Unlimited size. Secure P2P.
             </p>
         </div>
     );

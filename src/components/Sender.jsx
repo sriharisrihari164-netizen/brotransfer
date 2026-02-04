@@ -1,220 +1,128 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { Peer } from 'peerjs';
+import React, { useMemo } from 'react';
+import { usePeer } from '../hooks/usePeer';
+import { useFileSender } from '../hooks/useFileSender';
 import FileDrop from './FileDrop';
-import { v4 as uuidv4 } from 'uuid';
-
-const CHUNK_SIZE = 16384; // 16KB
 
 const Sender = () => {
-    const [file, setFile] = useState(null);
-    const [code, setCode] = useState('');
-    const [status, setStatus] = useState('idle'); // idle, ready, connecting, transferring, completed
-    const [progress, setProgress] = useState(0);
-    const peerRef = useRef(null);
+    // Generate a stable code for this session
+    const code = useMemo(() => Math.floor(100000 + Math.random() * 900000).toString(), []);
+    const peerId = `brotransfer-${code}`;
 
-    useEffect(() => {
-        return () => {
-            if (peerRef.current) {
-                peerRef.current.destroy();
-            }
-        };
-    }, []);
+    const { peer, status: peerStatus, error: peerError } = usePeer(peerId);
+    const {
+        file,
+        transferStatus,
+        progress,
+        speed,
+        selectFile,
+        resetSender
+    } = useFileSender(peer);
 
-    const generateCode = () => {
-        // Generate a random 6-digit code
-        return Math.floor(100000 + Math.random() * 900000).toString();
+    const formatSpeed = (bytesPerSec) => {
+        if (bytesPerSec < 1024) return bytesPerSec.toFixed(0) + ' B/s';
+        if (bytesPerSec < 1024 * 1024) return (bytesPerSec / 1024).toFixed(1) + ' KB/s';
+        return (bytesPerSec / (1024 * 1024)).toFixed(1) + ' MB/s';
     };
 
-    const initializePeer = (codeObj) => {
-        const peerId = `brotransfer-${codeObj}`;
-        const peer = new Peer(peerId);
-        peerRef.current = peer;
-
-        peer.on('open', (id) => {
-            console.log('My Peer ID is: ' + id);
-            setCode(codeObj);
-            setStatus('ready');
-        });
-
-        peer.on('connection', (conn) => {
-            console.log('Connected to: ' + conn.peer);
-            setStatus('connecting');
-
-            conn.on('open', () => {
-                setStatus('transferring');
-                sendFile(conn);
-            });
-
-            conn.on('close', () => {
-                console.log('Connection closed');
-                setStatus(prev => prev === 'completed' ? prev : 'error');
-            });
-        });
-
-        peer.on('error', (err) => {
-            console.error('Peer error:', err);
-            if (err.type === 'unavailable-id') {
-                // Retry with new code if collision (unlikely but possible)
-                const newCode = generateCode();
-                initializePeer(newCode);
-            } else {
-                setStatus('error');
-            }
-        });
-    };
-
-    const fileRef = useRef(null); // Keep fresh ref for callbacks
-
-    const handleFileSelected = (selectedFile) => {
-        setFile(selectedFile);
-        fileRef.current = selectedFile;
-        const newCode = generateCode();
-        initializePeer(newCode);
-    };
-
-    const sendFile = (conn) => {
-        const currentFile = fileRef.current;
-        if (!currentFile) return;
-
-        // Send metadata
-        conn.send({
-            type: 'metadata',
-            name: currentFile.name,
-            size: currentFile.size,
-            fileType: currentFile.type
-        });
-
-        let offset = 0;
-        const reader = new FileReader();
-
-        reader.onload = (e) => {
-            conn.send({
-                type: 'chunk',
-                data: e.target.result,
-                offset: offset
-            });
-
-            offset += e.target.result.byteLength;
-            const percent = Math.min((offset / currentFile.size) * 100, 100);
-            setProgress(percent);
-
-            if (offset < currentFile.size) {
-                // Throttle to prevent buffer overflow and ensure reliability
-                setTimeout(readNextChunk, 10);
-            } else {
-                conn.send({ type: 'end' });
-                setStatus('completed');
-            }
-        };
-
-        const readNextChunk = () => {
-            const slice = currentFile.slice(offset, offset + CHUNK_SIZE);
-            reader.readAsArrayBuffer(slice);
-        };
-
-        // Small delay before starting chunks to ensure metadata is received
-        setTimeout(readNextChunk, 100);
-    };
-
-    const reset = () => {
-        if (peerRef.current) {
-            peerRef.current.destroy();
-            peerRef.current = null;
-        }
-        setFile(null);
-        setCode('');
-        setStatus('idle');
-        setProgress(0);
-        fileRef.current = null;
-    };
+    if (peerError) {
+        return (
+            <div className="glass-card animate-fade-in" style={{ textAlign: 'center', borderColor: 'var(--error)' }}>
+                <h3 style={{ color: 'var(--error)' }}>Connection Error</h3>
+                <p>{peerError.message}</p>
+                <button className="glass-btn" onClick={() => window.location.reload()}>Retry</button>
+            </div>
+        );
+    }
 
     return (
-        <div style={{ width: '100%', maxWidth: '600px', margin: '0 auto' }}>
-            {status === 'idle' && (
-                <FileDrop onFileSelected={handleFileSelected} />
+        <div className="animate-fade-in" style={{ width: '100%', maxWidth: '600px', margin: '0 auto' }}>
+
+            {/* 1. File Selection State */}
+            {transferStatus === 'idle' && (
+                <>
+                    <FileDrop onFileSelected={selectFile} />
+                    {peerStatus === 'loading' && (
+                        <p style={{ textAlign: 'center', marginTop: '1rem', opacity: 0.7 }}>Initializing secure connection...</p>
+                    )}
+                </>
             )}
 
-            {status === 'ready' && (
-                <div className="card" style={{ textAlign: 'center' }}>
-                    <h2 style={{ marginBottom: '1rem' }}>File Ready to Send</h2>
-                    <div style={{
-                        background: 'var(--bg-primary)',
-                        padding: '1rem',
-                        borderRadius: '8px',
-                        marginBottom: '1.5rem',
-                        wordBreak: 'break-all'
-                    }}>
-                        📄 {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+            {/* 2. Ready / Waiting for Receiver State */}
+            {transferStatus === 'connecting' || (transferStatus === 'idle' && file) ? (
+                <div className="glass-card" style={{ textAlign: 'center' }}>
+                    <h2 style={{ marginBottom: '1rem' }}>Ready to Send</h2>
+
+                    <div className="glass-input" style={{ marginBottom: '2rem', display: 'inline-block', textAlign: 'left' }}>
+                        <span style={{ opacity: 0.7 }}>File: </span>
+                        <strong>{file?.name}</strong>
+                        <br />
+                        <span style={{ opacity: 0.7, fontSize: '0.8rem' }}>
+                            Size: {(file?.size / (1024 * 1024)).toFixed(2)} MB
+                        </span>
                     </div>
 
-                    <p style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Enter this code on the receiving device:</p>
-
+                    <p style={{ opacity: 0.8, marginBottom: '0.5rem' }}>Ask receiver to enter this code:</p>
                     <div style={{
-                        fontSize: '3rem',
-                        fontWeight: 'bold',
-                        letterSpacing: '0.5rem',
+                        fontSize: '3.5rem',
+                        fontWeight: '800',
+                        letterSpacing: '0.4rem',
                         color: 'var(--accent-primary)',
-                        margin: '1.5rem 0'
+                        textShadow: '0 0 30px var(--accent-glow)',
+                        marginBottom: '1rem'
                     }}>
                         {code}
                     </div>
 
                     <div style={{ marginTop: '2rem' }}>
-                        <div className="spinner" style={{ margin: '0 auto 1rem' }}></div>
-                        <p className="animate-pulse">Waiting for receiver...</p>
+                        <div className="spinner"></div>
+                        <p className="animate-pulse" style={{ marginTop: '1rem' }}>Waiting for receiver connection...</p>
                     </div>
 
                     <button
-                        onClick={reset}
-                        style={{
-                            marginTop: '1.5rem',
-                            background: 'transparent',
-                            color: 'var(--text-secondary)',
-                            padding: '0.5rem',
-                            textDecoration: 'underline'
-                        }}
+                        className="glass-btn"
+                        onClick={resetSender}
+                        style={{ marginTop: '2rem', fontSize: '0.9rem', opacity: 0.7 }}
                     >
                         Cancel
                     </button>
                 </div>
-            )}
+            ) : null}
 
-            {(status === 'transferring' || status === 'completed') && (
-                <div className="card" style={{ textAlign: 'center' }}>
-                    <h2 style={{ marginBottom: '1rem' }}>{status === 'completed' ? 'Transfer Complete!' : 'Sending File...'}</h2>
-                    <div style={{ width: '100%', height: '10px', background: 'var(--bg-primary)', borderRadius: '5px', overflow: 'hidden', marginBottom: '1rem' }}>
-                        <div style={{
-                            width: `${progress}%`,
-                            height: '100%',
-                            background: 'linear-gradient(90deg, var(--accent-primary), var(--accent-secondary))',
-                            transition: 'width 0.2s linear'
-                        }}></div>
+            {/* 3. Transferring State */}
+            {(transferStatus === 'transferring' || transferStatus === 'completed') && (
+                <div className="glass-card" style={{ textAlign: 'center' }}>
+                    <h2 style={{ marginBottom: '1rem' }}>
+                        {transferStatus === 'completed' ? 'Sent Successfully!' : 'Sending...'}
+                    </h2>
+
+                    <div className="progress-bar-container">
+                        <div
+                            className="progress-bar-fill"
+                            style={{ width: `${progress}%` }}
+                        ></div>
                     </div>
-                    <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{Math.round(progress)}%</p>
 
-                    {status === 'completed' && (
-                        <button
-                            onClick={reset}
-                            style={{
-                                marginTop: '2rem',
-                                background: 'var(--accent-primary)',
-                                color: 'white',
-                                padding: '0.8rem 1.5rem',
-                                borderRadius: '8px',
-                                fontWeight: 'bold'
-                            }}
-                        >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', opacity: 0.8, marginBottom: '2rem' }}>
+                        <span>{Math.round(progress)}%</span>
+                        <span>{formatSpeed(speed)}</span>
+                    </div>
+
+                    {transferStatus === 'completed' && (
+                        <button className="glass-btn primary" onClick={resetSender}>
                             Send Another File
                         </button>
                     )}
                 </div>
             )}
 
-            {status === 'error' && (
-                <div className="card" style={{ textAlign: 'center' }}>
-                    <h2 style={{ color: 'var(--error)', marginBottom: '1rem' }}>Error Occurred</h2>
-                    <p>Something went wrong. Please try again.</p>
-                    <button onClick={reset} style={{ marginTop: '1rem', padding: '0.5rem 1rem' }}>Try Again</button>
+            {/* 4. Error State */}
+            {transferStatus === 'error' && (
+                <div className="glass-card" style={{ textAlign: 'center', borderColor: 'var(--error)' }}>
+                    <h2 style={{ color: 'var(--error)', marginBottom: '1rem' }}>Transfer Failed</h2>
+                    <p>The connection was lost or interrupted.</p>
+                    <button className="glass-btn" onClick={resetSender} style={{ marginTop: '1.5rem' }}>
+                        Try Again
+                    </button>
                 </div>
             )}
         </div>

@@ -8,48 +8,46 @@ const Home = () => {
     const [mode, setMode] = useState('send'); // 'send' or 'receive'
 
     return (
-        <div className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2rem' }}>
-            <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-                <h1 className="gradient-text" style={{ fontSize: '3rem', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2rem', width: '100%' }}>
+
+            <div style={{ textAlign: 'center', marginTop: '3rem', marginBottom: '1rem' }}>
+                <h1 className="animate-fade-in" style={{
+                    fontSize: '4rem',
+                    marginBottom: '0.5rem',
+                    background: 'linear-gradient(to right, #ffffff, #a0a0a0)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    fontWeight: 800
+                }}>
                     Share files instantly.
                 </h1>
-                <p style={{ fontSize: '1.2rem', color: 'var(--text-secondary)' }}>
-                    Direct peer-to-peer transfer using a 6-digit code.
+                <p className="animate-fade-in" style={{ fontSize: '1.25rem', color: 'var(--text-secondary)', opacity: 0.8 }}>
+                    Secure, Limitless P2P Transfer.
                 </p>
             </div>
 
-            <div style={{
-                display: 'flex',
-                background: 'var(--bg-secondary)',
-                padding: '0.25rem',
-                borderRadius: '12px',
-                border: '1px solid var(--border-color)',
-                marginBottom: '2rem'
-            }}>
+            {/* Mode Switcher */}
+            <div className="glass-card" style={{ padding: '0.5rem', borderRadius: '16px', display: 'flex', gap: '0.5rem' }}>
                 <button
                     onClick={() => setMode('send')}
+                    className="glass-btn"
                     style={{
-                        padding: '0.75rem 2rem',
-                        borderRadius: '8px',
-                        background: mode === 'send' ? 'var(--bg-primary)' : 'transparent',
-                        color: mode === 'send' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                        fontWeight: 'bold',
-                        boxShadow: mode === 'send' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
-                        transition: 'all 0.2s ease'
+                        background: mode === 'send' ? 'var(--accent-primary)' : 'transparent',
+                        borderColor: mode === 'send' ? 'var(--accent-primary)' : 'transparent',
+                        boxShadow: mode === 'send' ? '0 4px 15px var(--accent-glow)' : 'none',
+                        minWidth: '120px'
                     }}
                 >
                     Send
                 </button>
                 <button
                     onClick={() => setMode('receive')}
+                    className="glass-btn"
                     style={{
-                        padding: '0.75rem 2rem',
-                        borderRadius: '8px',
-                        background: mode === 'receive' ? 'var(--bg-primary)' : 'transparent',
-                        color: mode === 'receive' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                        fontWeight: 'bold',
-                        boxShadow: mode === 'receive' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
-                        transition: 'all 0.2s ease'
+                        background: mode === 'receive' ? 'var(--accent-primary)' : 'transparent',
+                        borderColor: mode === 'receive' ? 'var(--accent-primary)' : 'transparent',
+                        boxShadow: mode === 'receive' ? '0 4px 15px var(--accent-glow)' : 'none',
+                        minWidth: '120px'
                     }}
                 >
                     Receive
@@ -60,10 +58,11 @@ const Home = () => {
                 {mode === 'send' ? <Sender /> : <Receiver />}
             </div>
 
-            {/* Instructions Section */}
-            <Instructions />
+            {/* Sections */}
+            <div className="glass-card" style={{ width: '100%', maxWidth: '800px', marginBottom: '4rem' }}>
+                <Instructions />
+            </div>
 
-            {/* Features Section */}
             <Features />
         </div>
     );
