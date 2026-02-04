@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Sender from '../components/Sender';
 import Receiver from '../components/Receiver';
 import Features from '../components/Features';
+import Instructions from '../components/Instructions';
 
 const Home = () => {
     const [mode, setMode] = useState('send'); // 'send' or 'receive'
@@ -58,6 +59,9 @@ const Home = () => {
             <div style={{ width: '100%', marginBottom: '4rem' }}>
                 {mode === 'send' ? <Sender /> : <Receiver />}
             </div>
+
+            {/* Instructions Section */}
+            <Instructions />
 
             {/* Features Section */}
             <Features />
