@@ -5,6 +5,7 @@ const Receiver = () => {
     const [code, setCode] = useState('');
     const [status, setStatus] = useState('idle'); // idle, connecting, receiving, completed, error
     const [progress, setProgress] = useState(0);
+    const [errorMsg, setErrorMsg] = useState('');
     const [fileMeta, setFileMeta] = useState(null);
     const chunksRef = useRef([]);
     const receivedSizeRef = useRef(0);
@@ -57,16 +58,23 @@ const Receiver = () => {
 
             conn.on('error', (err) => {
                 console.error('Connection error:', err);
+                setErrorMsg(err.message || 'Connection error');
                 setStatus('error');
             });
 
             conn.on('close', () => {
                 console.log("Connection closed");
+                setStatus(prev => {
+                    if (prev === 'completed') return prev;
+                    setErrorMsg('Connection closed by sender');
+                    return 'error';
+                });
             });
         });
 
         peer.on('error', (err) => {
             console.error('Peer error:', err);
+            setErrorMsg(err.message || 'Peer connection error');
             setStatus('error');
         });
     };
@@ -93,6 +101,7 @@ const Receiver = () => {
         setCode('');
         setStatus('idle');
         setProgress(0);
+        setErrorMsg('');
         setFileMeta(null);
         chunksRef.current = [];
         receivedSizeRef.current = 0;
@@ -201,7 +210,7 @@ const Receiver = () => {
             {status === 'error' && (
                 <div className="card" style={{ textAlign: 'center' }}>
                     <h2 style={{ color: 'var(--error)', marginBottom: '1rem' }}>Error</h2>
-                    <p>Could not connect to peer. Check the code and try again.</p>
+                    <p>{errorMsg || 'Could not connect to peer. Check the code and try again.'}</p>
                     <button onClick={reset} style={{ marginTop: '1rem', padding: '0.5rem 1rem' }}>Try Again</button>
                 </div>
             )}

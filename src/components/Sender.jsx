@@ -47,7 +47,7 @@ const Sender = () => {
 
             conn.on('close', () => {
                 console.log('Connection closed');
-                // If transfer not done, maybe handle error?
+                setStatus(prev => prev === 'completed' ? prev : 'error');
             });
         });
 
@@ -99,7 +99,8 @@ const Sender = () => {
             setProgress(percent);
 
             if (offset < currentFile.size) {
-                readNextChunk();
+                // Throttle to prevent buffer overflow and ensure reliability
+                setTimeout(readNextChunk, 10);
             } else {
                 conn.send({ type: 'end' });
                 setStatus('completed');
@@ -111,7 +112,8 @@ const Sender = () => {
             reader.readAsArrayBuffer(slice);
         };
 
-        readNextChunk();
+        // Small delay before starting chunks to ensure metadata is received
+        setTimeout(readNextChunk, 100);
     };
 
     const reset = () => {
