@@ -45,6 +45,7 @@ const Receiver = () => {
                 } else if (data.type === 'chunk') {
                     chunksRef.current.push(data.data);
                     receivedSizeRef.current += data.data.byteLength;
+                    console.log(`Received chunk. Total size: ${receivedSizeRef.current}`);
 
                     if (fileMeta) {
                         const percent = Math.min((receivedSizeRef.current / fileMeta.size) * 100, 100);
@@ -190,13 +191,31 @@ const Receiver = () => {
             {status === 'completed' && (
                 <div className="card" style={{ textAlign: 'center' }}>
                     <h2 style={{ color: 'var(--success)', marginBottom: '1rem' }}>Download Complete!</h2>
-                    <p style={{ marginBottom: '1.5rem' }}>{fileMeta?.name} has been saved to your device.</p>
+                    <p style={{ marginBottom: '1.5rem' }}>{fileMeta?.name} has been received.</p>
+
+                    <button
+                        onClick={downloadFile}
+                        style={{
+                            background: 'var(--accent-primary)',
+                            color: 'white',
+                            padding: '1rem 2rem',
+                            borderRadius: '8px',
+                            fontWeight: 'bold',
+                            fontSize: '1.1rem',
+                            marginBottom: '1rem',
+                            width: '100%',
+                            display: 'block'
+                        }}
+                    >
+                        Save File
+                    </button>
+
                     <button
                         onClick={reset}
                         style={{
-                            background: 'var(--bg-primary)',
+                            background: 'transparent',
                             border: '1px solid var(--border-color)',
-                            color: 'var(--text-primary)',
+                            color: 'var(--text-secondary)',
                             padding: '0.8rem 1.5rem',
                             borderRadius: '6px',
                             fontWeight: 'bold'
