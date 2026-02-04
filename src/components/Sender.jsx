@@ -77,148 +77,147 @@ const Sender = () => {
         if (!currentFile) return;
 
         // Send metadata
-        conn.send({
-            type: 'metadata',
+        type: 'metadata',
             name: currentFile.name,
-            size: currentFile.size,
-            type: currentFile.type
+                size: currentFile.size,
+                    fileType: currentFile.type
+    });
+
+    let offset = 0;
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+        conn.send({
+            type: 'chunk',
+            data: e.target.result,
+            offset: offset
         });
 
-        let offset = 0;
-        const reader = new FileReader();
+        offset += e.target.result.byteLength;
+        const percent = Math.min((offset / currentFile.size) * 100, 100);
+        setProgress(percent);
 
-        reader.onload = (e) => {
-            conn.send({
-                type: 'chunk',
-                data: e.target.result,
-                offset: offset
-            });
-
-            offset += e.target.result.byteLength;
-            const percent = Math.min((offset / currentFile.size) * 100, 100);
-            setProgress(percent);
-
-            if (offset < currentFile.size) {
-                // Throttle to prevent buffer overflow and ensure reliability
-                setTimeout(readNextChunk, 10);
-            } else {
-                conn.send({ type: 'end' });
-                setStatus('completed');
-            }
-        };
-
-        const readNextChunk = () => {
-            const slice = currentFile.slice(offset, offset + CHUNK_SIZE);
-            reader.readAsArrayBuffer(slice);
-        };
-
-        // Small delay before starting chunks to ensure metadata is received
-        setTimeout(readNextChunk, 100);
-    };
-
-    const reset = () => {
-        if (peerRef.current) {
-            peerRef.current.destroy();
-            peerRef.current = null;
+        if (offset < currentFile.size) {
+            // Throttle to prevent buffer overflow and ensure reliability
+            setTimeout(readNextChunk, 10);
+        } else {
+            conn.send({ type: 'end' });
+            setStatus('completed');
         }
-        setFile(null);
-        setCode('');
-        setStatus('idle');
-        setProgress(0);
-        fileRef.current = null;
     };
 
-    return (
-        <div style={{ width: '100%', maxWidth: '600px', margin: '0 auto' }}>
-            {status === 'idle' && (
-                <FileDrop onFileSelected={handleFileSelected} />
-            )}
+    const readNextChunk = () => {
+        const slice = currentFile.slice(offset, offset + CHUNK_SIZE);
+        reader.readAsArrayBuffer(slice);
+    };
 
-            {status === 'ready' && (
-                <div className="card" style={{ textAlign: 'center' }}>
-                    <h2 style={{ marginBottom: '1rem' }}>File Ready to Send</h2>
+    // Small delay before starting chunks to ensure metadata is received
+    setTimeout(readNextChunk, 100);
+};
+
+const reset = () => {
+    if (peerRef.current) {
+        peerRef.current.destroy();
+        peerRef.current = null;
+    }
+    setFile(null);
+    setCode('');
+    setStatus('idle');
+    setProgress(0);
+    fileRef.current = null;
+};
+
+return (
+    <div style={{ width: '100%', maxWidth: '600px', margin: '0 auto' }}>
+        {status === 'idle' && (
+            <FileDrop onFileSelected={handleFileSelected} />
+        )}
+
+        {status === 'ready' && (
+            <div className="card" style={{ textAlign: 'center' }}>
+                <h2 style={{ marginBottom: '1rem' }}>File Ready to Send</h2>
+                <div style={{
+                    background: 'var(--bg-primary)',
+                    padding: '1rem',
+                    borderRadius: '8px',
+                    marginBottom: '1.5rem',
+                    wordBreak: 'break-all'
+                }}>
+                    📄 {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                </div>
+
+                <p style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Enter this code on the receiving device:</p>
+
+                <div style={{
+                    fontSize: '3rem',
+                    fontWeight: 'bold',
+                    letterSpacing: '0.5rem',
+                    color: 'var(--accent-primary)',
+                    margin: '1.5rem 0'
+                }}>
+                    {code}
+                </div>
+
+                <div style={{ marginTop: '2rem' }}>
+                    <div className="spinner" style={{ margin: '0 auto 1rem' }}></div>
+                    <p className="animate-pulse">Waiting for receiver...</p>
+                </div>
+
+                <button
+                    onClick={reset}
+                    style={{
+                        marginTop: '1.5rem',
+                        background: 'transparent',
+                        color: 'var(--text-secondary)',
+                        padding: '0.5rem',
+                        textDecoration: 'underline'
+                    }}
+                >
+                    Cancel
+                </button>
+            </div>
+        )}
+
+        {(status === 'transferring' || status === 'completed') && (
+            <div className="card" style={{ textAlign: 'center' }}>
+                <h2 style={{ marginBottom: '1rem' }}>{status === 'completed' ? 'Transfer Complete!' : 'Sending File...'}</h2>
+                <div style={{ width: '100%', height: '10px', background: 'var(--bg-primary)', borderRadius: '5px', overflow: 'hidden', marginBottom: '1rem' }}>
                     <div style={{
-                        background: 'var(--bg-primary)',
-                        padding: '1rem',
-                        borderRadius: '8px',
-                        marginBottom: '1.5rem',
-                        wordBreak: 'break-all'
-                    }}>
-                        📄 {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                    </div>
+                        width: `${progress}%`,
+                        height: '100%',
+                        background: 'linear-gradient(90deg, var(--accent-primary), var(--accent-secondary))',
+                        transition: 'width 0.2s linear'
+                    }}></div>
+                </div>
+                <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{Math.round(progress)}%</p>
 
-                    <p style={{ marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Enter this code on the receiving device:</p>
-
-                    <div style={{
-                        fontSize: '3rem',
-                        fontWeight: 'bold',
-                        letterSpacing: '0.5rem',
-                        color: 'var(--accent-primary)',
-                        margin: '1.5rem 0'
-                    }}>
-                        {code}
-                    </div>
-
-                    <div style={{ marginTop: '2rem' }}>
-                        <div className="spinner" style={{ margin: '0 auto 1rem' }}></div>
-                        <p className="animate-pulse">Waiting for receiver...</p>
-                    </div>
-
+                {status === 'completed' && (
                     <button
                         onClick={reset}
                         style={{
-                            marginTop: '1.5rem',
-                            background: 'transparent',
-                            color: 'var(--text-secondary)',
-                            padding: '0.5rem',
-                            textDecoration: 'underline'
+                            marginTop: '2rem',
+                            background: 'var(--accent-primary)',
+                            color: 'white',
+                            padding: '0.8rem 1.5rem',
+                            borderRadius: '8px',
+                            fontWeight: 'bold'
                         }}
                     >
-                        Cancel
+                        Send Another File
                     </button>
-                </div>
-            )}
+                )}
+            </div>
+        )}
 
-            {(status === 'transferring' || status === 'completed') && (
-                <div className="card" style={{ textAlign: 'center' }}>
-                    <h2 style={{ marginBottom: '1rem' }}>{status === 'completed' ? 'Transfer Complete!' : 'Sending File...'}</h2>
-                    <div style={{ width: '100%', height: '10px', background: 'var(--bg-primary)', borderRadius: '5px', overflow: 'hidden', marginBottom: '1rem' }}>
-                        <div style={{
-                            width: `${progress}%`,
-                            height: '100%',
-                            background: 'linear-gradient(90deg, var(--accent-primary), var(--accent-secondary))',
-                            transition: 'width 0.2s linear'
-                        }}></div>
-                    </div>
-                    <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{Math.round(progress)}%</p>
-
-                    {status === 'completed' && (
-                        <button
-                            onClick={reset}
-                            style={{
-                                marginTop: '2rem',
-                                background: 'var(--accent-primary)',
-                                color: 'white',
-                                padding: '0.8rem 1.5rem',
-                                borderRadius: '8px',
-                                fontWeight: 'bold'
-                            }}
-                        >
-                            Send Another File
-                        </button>
-                    )}
-                </div>
-            )}
-
-            {status === 'error' && (
-                <div className="card" style={{ textAlign: 'center' }}>
-                    <h2 style={{ color: 'var(--error)', marginBottom: '1rem' }}>Error Occurred</h2>
-                    <p>Something went wrong. Please try again.</p>
-                    <button onClick={reset} style={{ marginTop: '1rem', padding: '0.5rem 1rem' }}>Try Again</button>
-                </div>
-            )}
-        </div>
-    );
+        {status === 'error' && (
+            <div className="card" style={{ textAlign: 'center' }}>
+                <h2 style={{ color: 'var(--error)', marginBottom: '1rem' }}>Error Occurred</h2>
+                <p>Something went wrong. Please try again.</p>
+                <button onClick={reset} style={{ marginTop: '1rem', padding: '0.5rem 1rem' }}>Try Again</button>
+            </div>
+        )}
+    </div>
+);
 };
 
 export default Sender;

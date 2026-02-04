@@ -82,7 +82,7 @@ const Receiver = () => {
     const downloadFile = () => {
         if (!fileMeta || chunksRef.current.length === 0) return;
 
-        const blob = new Blob(chunksRef.current, { type: fileMeta.type });
+        const blob = new Blob(chunksRef.current, { type: fileMeta.fileType });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
