@@ -3,7 +3,7 @@ import { usePeer } from '../hooks/usePeer';
 import { useFileSender } from '../hooks/useFileSender';
 import FileDrop from './FileDrop';
 
-const Sender = () => {
+const Sender = ({ onReset }) => {
     // Generate a stable code for this session
     const code = useMemo(() => Math.floor(100000 + Math.random() * 900000).toString(), []);
     const peerId = `brotransfer-${code}`;
@@ -15,13 +15,19 @@ const Sender = () => {
         progress,
         speed,
         selectFile,
-        resetSender
+        resetSender: softReset
     } = useFileSender(peer);
 
     const formatSpeed = (bytesPerSec) => {
         if (bytesPerSec < 1024) return bytesPerSec.toFixed(0) + ' B/s';
         if (bytesPerSec < 1024 * 1024) return (bytesPerSec / 1024).toFixed(1) + ' KB/s';
         return (bytesPerSec / (1024 * 1024)).toFixed(1) + ' MB/s';
+    };
+
+    const handleReset = () => {
+        // Trigger parent to re-mount us, getting a fresh Peer ID and clean slate.
+        if (onReset) onReset();
+        else softReset(); // Fallback
     };
 
     if (peerError) {
@@ -80,7 +86,7 @@ const Sender = () => {
 
                     <button
                         className="glass-btn"
-                        onClick={resetSender}
+                        onClick={handleReset}
                         style={{ marginTop: '2rem', fontSize: '0.9rem', opacity: 0.7 }}
                     >
                         Cancel
@@ -108,7 +114,7 @@ const Sender = () => {
                     </div>
 
                     {transferStatus === 'completed' && (
-                        <button className="glass-btn primary" onClick={resetSender}>
+                        <button className="glass-btn primary" onClick={handleReset}>
                             Send Another File
                         </button>
                     )}
@@ -120,7 +126,7 @@ const Sender = () => {
                 <div className="glass-card" style={{ textAlign: 'center', borderColor: 'var(--error)' }}>
                     <h2 style={{ color: 'var(--error)', marginBottom: '1rem' }}>Transfer Failed</h2>
                     <p>The connection was lost or interrupted.</p>
-                    <button className="glass-btn" onClick={resetSender} style={{ marginTop: '1.5rem' }}>
+                    <button className="glass-btn" onClick={handleReset} style={{ marginTop: '1.5rem' }}>
                         Try Again
                     </button>
                 </div>
