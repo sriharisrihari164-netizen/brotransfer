@@ -18,12 +18,19 @@ export const useFileSender = (peer) => {
 
     // Listen for incoming connections
     useEffect(() => {
-        if (!peer || !file) return;
+        if (!peer) return;
 
-        console.log("Sender listening for connection...");
-
-        peer.on('connection', (conn) => {
+        const handleConnection = (conn) => {
             console.log("Sender received connection from:", conn.peer);
+
+            // If no file is selected, we shouldn't really accept, or we might be in weird state.
+            // But with the UI flow, we shouldn't reach here easily without a file.
+            // Using ref to ensure we get the latest file instance without re-binding listener.
+            if (!fileRef.current) {
+                console.warn("Connection received but no file selected. Closing.");
+                conn.close();
+                return;
+            }
 
             // Validate connection? For now accept all.
             connectionRef.current = conn;
@@ -44,9 +51,16 @@ export const useFileSender = (peer) => {
                 console.error("Connection error:", err);
                 setTransferStatus('error');
             });
-        });
+        };
 
-    }, [peer, file]);
+        console.log("Sender attached connection listener.");
+        peer.on('connection', handleConnection);
+
+        return () => {
+            peer.off('connection', handleConnection);
+        };
+
+    }, [peer]); // Removed 'file' dependency to prevent duplicate listeners
 
     const startTransfer = async (conn) => {
         const currentFile = fileRef.current;
