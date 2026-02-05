@@ -27,7 +27,16 @@ export const usePeer = (customId = null) => {
         // but the base Peer object just needs to exist.
 
         // If customId is provided, use it. Otherwise undefined (random)
-        const newPeer = customId ? new Peer(customId) : new Peer();
+        const peerConfig = {
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:global.stun.twilio.com:3478' }
+                ]
+            }
+        };
+
+        const newPeer = customId ? new Peer(customId, peerConfig) : new Peer(peerConfig);
 
         newPeer.on('open', (id) => {
             console.log('Peer Open. ID:', id);
