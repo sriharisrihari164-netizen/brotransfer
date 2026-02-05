@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePeer } from '../hooks/usePeer';
 import { useFileReceiver } from '../hooks/useFileReceiver';
 
 const Receiver = ({ onReset }) => {
     const [code, setCode] = useState('');
+    const [refreshTimer, setRefreshTimer] = useState(null);
     const { peer, myId, status: peerStatus, error: peerError } = usePeer();
     const {
         fileMeta,
@@ -16,6 +17,24 @@ const Receiver = ({ onReset }) => {
         downloadFile,
         resetReceiver
     } = useFileReceiver(peer, myId);
+
+    // Auto-Refresh Logic
+    useEffect(() => {
+        if (transferStatus === 'completed') {
+            setRefreshTimer(5); // Start 5s countdown
+            const timer = setInterval(() => {
+                setRefreshTimer(prev => {
+                    if (prev <= 1) {
+                        clearInterval(timer);
+                        window.location.reload(); // Force Reload
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+            return () => clearInterval(timer);
+        }
+    }, [transferStatus]);
 
     const handleConnect = (e) => {
         e.preventDefault();
@@ -137,11 +156,19 @@ const Receiver = ({ onReset }) => {
                                 </button>
                             )}
 
+                            {/* Auto-Refresh Message */}
+                            <div style={{ margin: '1rem 0', color: 'var(--accent-primary)', fontWeight: 'bold' }}>
+                                Refreshing in {refreshTimer}s...
+                            </div>
+                            <p style={{ fontSize: '0.8rem', opacity: 0.6, marginBottom: '1rem' }}>
+                                (Clearing memory for next transfer)
+                            </p>
+
                             <button
                                 className="glass-btn"
-                                onClick={handleReset}
+                                onClick={() => window.location.reload()}
                             >
-                                Receive Another
+                                Refresh Now
                             </button>
                         </div>
                     )}
