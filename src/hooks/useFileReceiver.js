@@ -13,45 +13,8 @@ export const useFileReceiver = (peer, myId) => {
     const lastProgressTimeRef = useRef(0);
     const lastReceivedSizeRef = useRef(0);
 
-    const connectToSender = useCallback((code) => {
-        if (!peer || !code) return;
-
-        const connId = `brotransfer-${code}`;
-        console.log(`Connecting to Sender: ${connId}`);
-        setTransferStatus('connecting');
-        setErrorMsg('');
-
-        const conn = peer.connect(connId, {
-            reliable: true
-        });
-
-        connectionRef.current = conn;
-
-        conn.on('open', () => {
-            console.log('Connected to Sender!');
-            setTransferStatus('waiting'); // Waiting for metadata
-        });
-
-        conn.on('data', (data) => {
-            handleData(data, conn);
-        });
-
-        conn.on('close', () => {
-            console.log('Sender disconnected');
-            setTransferStatus(prev => {
-                if (prev === 'completed') return prev;
-                setErrorMsg('Sender disconnected prematurely');
-                return 'error';
-            });
-        });
-
-        conn.on('error', (err) => {
-            console.error('Connection error:', err);
-            setErrorMsg(err.message || 'Connection failed');
-            setTransferStatus('error');
-        });
-
-    }, [peer]);
+    // Keep handleDataRef up to date with the latest render's handleData
+    const handleDataRef = useRef(null);
 
     const handleData = (data, conn) => {
         if (data.type === 'metadata') {
@@ -93,6 +56,53 @@ export const useFileReceiver = (peer, myId) => {
             downloadFile();
         }
     };
+
+    useEffect(() => {
+        handleDataRef.current = handleData;
+    });
+
+    const connectToSender = useCallback((code) => {
+        if (!peer || !code) return;
+
+        const connId = `brotransfer-${code}`;
+        console.log(`Connecting to Sender: ${connId}`);
+        setTransferStatus('connecting');
+        setErrorMsg('');
+
+        const conn = peer.connect(connId, {
+            reliable: true
+        });
+
+        connectionRef.current = conn;
+
+        conn.on('open', () => {
+            console.log('Connected to Sender!');
+            setTransferStatus('waiting'); // Waiting for metadata
+        });
+
+        conn.on('data', (data) => {
+            // Use the ref to ensure we call the latest handleData (with access to fresh state)
+            if (handleDataRef.current) {
+                handleDataRef.current(data, conn);
+            }
+        });
+
+        conn.on('close', () => {
+            console.log('Sender disconnected');
+            setTransferStatus(prev => {
+                if (prev === 'completed') return prev;
+                setErrorMsg('Sender disconnected prematurely');
+                return 'error';
+            });
+        });
+
+        conn.on('error', (err) => {
+            console.error('Connection error:', err);
+            setErrorMsg(err.message || 'Connection failed');
+            setTransferStatus('error');
+        });
+
+    }, [peer]);
 
     const downloadFile = useCallback(() => {
         // ... (Download logic same as before, but accessing ref/state via closure)
