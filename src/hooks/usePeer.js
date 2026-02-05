@@ -50,14 +50,27 @@ export const usePeer = (customId = null) => {
             setStatus('error');
         });
 
+        // Auto-reconnect on disconnect
         newPeer.on('disconnected', () => {
-            console.log('Peer disconnected');
+            console.log('Peer disconnected from signaling server. Attempting reconnect...');
             setStatus('disconnected');
+            // Try to reconnect
+            try {
+                newPeer.reconnect();
+            } catch (err) {
+                console.error("Reconnect failed:", err);
+            }
+        });
+
+        newPeer.on('close', () => {
+            console.log("Peer destroyed/closed.");
+            setStatus('closed');
         });
 
         setPeer(newPeer);
 
         return () => {
+            // Clean up: destroy peer when hook unmounts
             newPeer.destroy();
         };
     }, []);
