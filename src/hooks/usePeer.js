@@ -4,7 +4,7 @@ import { Peer } from 'peerjs';
 /**
  * Hook to manage the PeerJS instance.
  * @returns {Object} { peer, myId, status, error }
- * /
+ */
 export const usePeer = (customId = null) => {
     const [peer, setPeer] = useState(null);
     const [myId, setMyId] = useState('');
