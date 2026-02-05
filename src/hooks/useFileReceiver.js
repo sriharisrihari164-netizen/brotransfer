@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { addLog } from '../utils/debugLog';
 
 export const useFileReceiver = (peer, myId) => {
     const [fileMeta, setFileMeta] = useState(null);
@@ -15,6 +14,7 @@ export const useFileReceiver = (peer, myId) => {
     const lastReceivedSizeRef = useRef(0);
     const fileMetaRef = useRef(null);
     const writableStreamRef = useRef(null); // For File System Access API
+    const objectUrlsRef = useRef([]); // Track created ObjectURLs for cleanup
 
     // Keep handleDataRef up to date with the latest render's handleData
     const handleDataRef = useRef(null);
@@ -23,7 +23,6 @@ export const useFileReceiver = (peer, myId) => {
         if (data.type === 'metadata') {
             const meta = data;
             console.log("Received Metadata:", meta);
-            addLog(`Received Metadata: ${meta.name} (${(meta.size / 1024 / 1024).toFixed(2)}MB)`, 'info');
             setFileMeta(meta);
             fileMetaRef.current = meta;
             setTransferStatus('receiving');
@@ -53,11 +52,9 @@ export const useFileReceiver = (peer, myId) => {
                         const writable = await handle.createWritable();
                         writableStreamRef.current = writable;
                         console.log("Streaming mode enabled.");
-                        addLog("Streaming mode successfully enabled.", 'success');
                     }
                 } catch (err) {
                     console.warn("Stream setup failed or cancelled (falling back to RAM):", err);
-                    addLog("Stream setup cancelled/failed. RAM mode.", 'warning');
                 }
             })();
 
@@ -74,7 +71,6 @@ export const useFileReceiver = (peer, myId) => {
                 // Fire and forget (catch error) for now, assuming robust stream.
                 writableStreamRef.current.write(data.data).catch(err => {
                     console.error("Stream write error:", err);
-                    addLog(`Stream write error: ${err.message}`, 'error');
                     setErrorMsg("Disk write error");
                     conn.close();
                 });
@@ -102,7 +98,7 @@ export const useFileReceiver = (peer, myId) => {
         }
         else if (data.type === 'end') {
             console.log("Transfer finished.");
-            addLog("End packet received. Finalizing...", 'info');
+
 
 
             // Finalize
@@ -119,14 +115,12 @@ export const useFileReceiver = (peer, myId) => {
             // Verify integrity
             if (fileMetaRef.current && receivedSizeRef.current !== fileMetaRef.current.size) {
                 console.warn("Size mismatch!", receivedSizeRef.current, fileMetaRef.current.size);
-                addLog(`Size Mismatch! Got ${receivedSizeRef.current}, Expected ${fileMetaRef.current.size}`, 'error');
                 setErrorMsg("Transfer mismatch/corruption detected.");
                 return;
             }
 
             setTransferStatus('completed');
             setProgress(100);
-            addLog("Transfer Completed! Sending ACK.", 'success');
 
             // Send ACK
             conn.send({ type: 'ack-end' });
@@ -147,7 +141,6 @@ export const useFileReceiver = (peer, myId) => {
 
         const connId = `brotransfer-${code}`;
         console.log(`Connecting to Sender: ${connId}`);
-        addLog(`Connecting to Sender: ${connId}...`, 'info');
         setTransferStatus('connecting');
         setErrorMsg('');
 
@@ -159,7 +152,6 @@ export const useFileReceiver = (peer, myId) => {
 
         conn.on('open', () => {
             console.log('Connected to Sender!');
-            addLog('Connected to Sender!', 'success');
             setTransferStatus('waiting'); // Waiting for metadata
         });
 
@@ -172,7 +164,6 @@ export const useFileReceiver = (peer, myId) => {
 
         conn.on('close', () => {
             console.log('Sender disconnected');
-            addLog('Sender disconnected.', 'warning');
             setTransferStatus(prev => {
                 if (prev === 'completed') return prev;
                 setErrorMsg('Sender disconnected prematurely');
@@ -182,7 +173,6 @@ export const useFileReceiver = (peer, myId) => {
 
         conn.on('error', (err) => {
             console.error('Connection error:', err);
-            addLog(`Connection Error: ${err.message}`, 'error');
             setErrorMsg(err.message || 'Connection failed');
             setTransferStatus('error');
         });
@@ -207,11 +197,10 @@ export const useFileReceiver = (peer, myId) => {
 
         try {
             console.log("Downloading file:", meta.name, "Size:", meta.size);
-            // Debug alert for mobile to confirm function entry
-            // alert(`Generating file: ${meta.name} (${(meta.size / 1024 / 1024).toFixed(2)} MB)`);
-            addLog("Starting Blob generation...", 'info');
             const blob = new Blob(chunksRef.current, { type: meta.fileType });
             const url = URL.createObjectURL(blob);
+            objectUrlsRef.current.push(url); // Track URL
+
             const a = document.createElement('a');
             a.href = url;
             a.download = meta.name;
@@ -219,24 +208,34 @@ export const useFileReceiver = (peer, myId) => {
             a.click();
             document.body.removeChild(a);
 
-            setTimeout(() => URL.revokeObjectURL(url), 10000); // 10s delay
+            // 1. Clear chunks immediately to free RAM
+            chunksRef.current = [];
+
+            // 2. Revoke URL faster (2s is enough for browser to grab the blob)
+            setTimeout(() => {
+                URL.revokeObjectURL(url);
+                objectUrlsRef.current = objectUrlsRef.current.filter(u => u !== url);
+            }, 2000);
+
         } catch (err) {
             console.error("Download failed:", err);
-            // Critical: Show this to user on mobile
-            addLog(`Download Crash: ${err.message}`, 'error');
             alert(`Download Error: ${err.message}. Your device might be out of RAM for this file size.`);
             setErrorMsg("Failed to construct file. System memory limit might be exceeded.");
         }
     }, []);
 
     const resetReceiver = () => {
+        // Cleanup Memory
+        objectUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+        objectUrlsRef.current = [];
+        chunksRef.current = [];
+
         setFileMeta(null);
         fileMetaRef.current = null;
         writableStreamRef.current = null; // Clear stream ref
         setTransferStatus('idle');
         setProgress(0);
         setSpeed(0);
-        chunksRef.current = [];
         receivedSizeRef.current = 0;
         setErrorMsg('');
         if (connectionRef.current) {

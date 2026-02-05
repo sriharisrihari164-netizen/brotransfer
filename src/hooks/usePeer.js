@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { Peer } from 'peerjs';
-import { addLog } from '../utils/debugLog';
 
 /**
  * Hook to manage the PeerJS instance.
  * @returns {Object} { peer, myId, status, error }
- */
+ * /
 export const usePeer = (customId = null) => {
     const [peer, setPeer] = useState(null);
     const [myId, setMyId] = useState('');
@@ -21,9 +20,6 @@ export const usePeer = (customId = null) => {
         if (ranOnce.current) return;
         ranOnce.current = true;
 
-        ranOnce.current = true;
-
-        addLog("Initializing Peer...");
         console.log("Initializing Peer with ID:", customId);
         // Auto-generate ID is handled by PeerJS if we don't pass one, 
         // but for this app we might want to let the component decide or just use random.
@@ -44,14 +40,12 @@ export const usePeer = (customId = null) => {
 
         newPeer.on('open', (id) => {
             console.log('Peer Open. ID:', id);
-            addLog(`Peer Open. My ID: ${id}`, 'success');
             setMyId(id);
             setStatus('ready');
         });
 
         newPeer.on('error', (err) => {
             console.error('Peer Error:', err);
-            addLog(`Peer Error: ${err.type} - ${err.message}`, 'error');
             setError(err);
             setStatus('error');
         });
@@ -59,7 +53,6 @@ export const usePeer = (customId = null) => {
         // Auto-reconnect on disconnect
         newPeer.on('disconnected', () => {
             console.log('Peer disconnected from signaling server. Attempting reconnect...');
-            addLog('Peer disconnected. Reconnecting...', 'warning');
             setStatus('disconnected');
             // Try to reconnect
             try {

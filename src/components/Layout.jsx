@@ -1,7 +1,6 @@
 import React from 'react';
 import Header from './Header';
 import { Outlet } from 'react-router-dom';
-import DebugLogger from './DebugLogger';
 
 const Layout = () => {
     return (
@@ -10,7 +9,6 @@ const Layout = () => {
             <main className="main-content">
                 <Outlet />
             </main>
-            <DebugLogger />
             <footer style={{
                 textAlign: 'center',
                 padding: '1rem',
