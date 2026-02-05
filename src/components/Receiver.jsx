@@ -11,6 +11,7 @@ const Receiver = ({ onReset }) => {
         progress,
         speed,
         errorMsg,
+        isStreaming,
         connectToSender,
         downloadFile,
         resetReceiver
@@ -102,7 +103,9 @@ const Receiver = ({ onReset }) => {
             {(transferStatus === 'receiving' || transferStatus === 'completed') && fileMeta && (
                 <div className="glass-card" style={{ textAlign: 'center' }}>
                     <h2 style={{ marginBottom: '0.5rem' }}>
-                        {transferStatus === 'completed' ? 'Download Ready' : 'Downloading...'}
+                        {transferStatus === 'completed'
+                            ? (isStreaming ? 'File Saved!' : 'Download Ready')
+                            : (isStreaming ? 'Saving to Disk...' : 'Downloading...')}
                     </h2>
 
                     <div style={{ marginBottom: '1.5rem', opacity: 0.8 }}>
@@ -123,13 +126,15 @@ const Receiver = ({ onReset }) => {
 
                     {transferStatus === 'completed' && (
                         <div className="animate-fade-in" style={{ marginTop: '2rem' }}>
-                            <button
-                                className="glass-btn primary"
-                                onClick={downloadFile}
-                                style={{ width: '100%', marginBottom: '1rem' }}
-                            >
-                                Save File
-                            </button>
+                            {!isStreaming && (
+                                <button
+                                    className="glass-btn primary"
+                                    onClick={downloadFile}
+                                    style={{ width: '100%', marginBottom: '1rem' }}
+                                >
+                                    Save File
+                                </button>
+                            )}
 
                             <button
                                 className="glass-btn"

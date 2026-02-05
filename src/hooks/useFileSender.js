@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 
-const CHUNK_SIZE = 64 * 1024; // 64KB chunks
-const MAX_BUFFER_AMOUNT = 1024 * 1024 * 8; // 8MB buffer limit
+const CHUNK_SIZE = 64 * 1024; // Reverted to 64KB for maximum reliability
+const MAX_BUFFER_AMOUNT = 64 * 1024 * 4; // Tighter buffer control
 
 export const useFileSender = (peer) => {
     const [file, setFile] = useState(null);
@@ -15,6 +15,7 @@ export const useFileSender = (peer) => {
     const startTimeRef = useRef(0);
     const lastProgressTimeRef = useRef(0);
     const lastOffsetRef = useRef(0);
+    const workerRef = useRef(null);
 
     // Listen for incoming connections
     useEffect(() => {
@@ -47,6 +48,15 @@ export const useFileSender = (peer) => {
                 setTransferStatus(prev => prev === 'completed' ? prev : 'error');
             });
 
+            conn.on('data', (data) => {
+                if (data && data.type === 'ack-end') {
+                    console.log("Received ACK-END from receiver. Transfer complete.");
+                    // Only now do we consider it completed
+                    setTransferStatus('completed');
+                    setProgress(100);
+                }
+            });
+
             conn.on('error', (err) => {
                 console.error("Connection error:", err);
                 setTransferStatus('error');
@@ -60,7 +70,29 @@ export const useFileSender = (peer) => {
             peer.off('connection', handleConnection);
         };
 
-    }, [peer]); // Removed 'file' dependency to prevent duplicate listeners
+    }, [peer]);
+
+    // Initialize Worker
+    useEffect(() => {
+        // Create worker
+        const worker = new Worker(new URL('../workers/fileWorker.js', import.meta.url));
+        workerRef.current = worker;
+
+        worker.onmessage = (e) => {
+            const { type, data, offset, error } = e.data;
+
+            if (type === 'chunk_data') {
+                handleChunkFromWorker(data, offset);
+            } else if (type === 'error') {
+                console.error("Worker error:", error);
+                setTransferStatus('error');
+            }
+        };
+
+        return () => {
+            worker.terminate();
+        };
+    }, []);
 
     const startTransfer = async (conn) => {
         const currentFile = fileRef.current;
@@ -79,64 +111,80 @@ export const useFileSender = (peer) => {
             fileType: currentFile.type
         });
 
-        // 2. Start Reading and Sending Loop
-        // Small delay to ensure metadata is received
-        setTimeout(() => sendNextChunk(conn, currentFile), 100);
+        // 2. Request first chunk from Worker
+        requestNextChunk(currentFile, 0);
     };
 
-    const sendNextChunk = (conn, currentFile) => {
-        // Stop if connection died
-        if (!conn || !conn.open) return;
+    const requestNextChunk = (currentFile, offset) => {
+        if (!workerRef.current) return;
+        workerRef.current.postMessage({
+            action: 'read_chunk',
+            file: currentFile,
+            offset: offset,
+            chunkSize: CHUNK_SIZE
+        });
+    };
 
-        // Check Backpressure
-        if (conn.bufferedAmount > MAX_BUFFER_AMOUNT) {
-            setTimeout(() => sendNextChunk(conn, currentFile), 50);
-            return;
-        }
+    const handleChunkFromWorker = (chunkData, offset) => {
+        const conn = connectionRef.current;
+        const currentFile = fileRef.current;
 
-        const offset = offsetRef.current;
+        if (!conn || !conn.open || !currentFile) return;
 
-        if (offset >= currentFile.size) {
+        // Send to Peer
+        conn.send({
+            type: 'chunk',
+            data: chunkData,
+            offset: offset
+        });
+
+        offsetRef.current += chunkData.byteLength;
+        updateProgress(currentFile.size);
+
+        // Flow Control & Next Chunk
+        const nextOffset = offset + chunkData.byteLength;
+
+        if (nextOffset >= currentFile.size) {
             conn.send({ type: 'end' });
-            setTransferStatus('completed');
+            setTransferStatus('waiting-for-ack');
             setProgress(100);
             return;
         }
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const chunk = e.target.result;
+        // Check Backpressure
+        if (conn.bufferedAmount > MAX_BUFFER_AMOUNT) {
+            // Wait until buffer clears
+            waitForBuffer(conn, currentFile, nextOffset);
+        } else {
+            // Immediately request next
+            requestNextChunk(currentFile, nextOffset);
+        }
+    };
 
-            conn.send({
-                type: 'chunk',
-                data: chunk,
-                offset: offset
-            });
+    const waitForBuffer = (conn, currentFile, nextOffset) => {
+        if (!conn.open) return;
+        if (conn.bufferedAmount <= MAX_BUFFER_AMOUNT / 2) { // Resume when half empty
+            requestNextChunk(currentFile, nextOffset);
+        } else {
+            setTimeout(() => waitForBuffer(conn, currentFile, nextOffset), 50);
+        }
+    };
 
-            offsetRef.current += chunk.byteLength;
+    const updateProgress = (totalSize) => {
+        const now = Date.now();
+        if (now - lastProgressTimeRef.current >= 200) { // Smoother updates (200ms)
+            const percent = Math.min((offsetRef.current / totalSize) * 100, 100);
+            setProgress(percent);
 
-            // Update Progress & Speed
-            const now = Date.now();
-            if (now - lastProgressTimeRef.current >= 500) {
-                const percent = Math.min((offsetRef.current / currentFile.size) * 100, 100);
-                setProgress(percent);
-
-                const bytesSinceLast = offsetRef.current - lastOffsetRef.current;
-                const timeSinceLast = (now - lastProgressTimeRef.current) / 1000;
-                if (timeSinceLast > 0) {
-                    setSpeed(bytesSinceLast / timeSinceLast);
-                }
-
-                lastProgressTimeRef.current = now;
-                lastOffsetRef.current = offsetRef.current;
+            const bytesSinceLast = offsetRef.current - lastOffsetRef.current;
+            const timeSinceLast = (now - lastProgressTimeRef.current) / 1000;
+            if (timeSinceLast > 0) {
+                setSpeed(bytesSinceLast / timeSinceLast);
             }
 
-            // Loop
-            sendNextChunk(conn, currentFile);
-        };
-
-        const slice = currentFile.slice(offset, offset + CHUNK_SIZE);
-        reader.readAsArrayBuffer(slice);
+            lastProgressTimeRef.current = now;
+            lastOffsetRef.current = offsetRef.current;
+        }
     };
 
     const selectFile = (selectedFile) => {

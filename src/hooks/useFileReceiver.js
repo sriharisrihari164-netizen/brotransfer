@@ -13,24 +13,70 @@ export const useFileReceiver = (peer, myId) => {
     const lastProgressTimeRef = useRef(0);
     const lastReceivedSizeRef = useRef(0);
     const fileMetaRef = useRef(null);
+    const writableStreamRef = useRef(null); // For File System Access API
 
     // Keep handleDataRef up to date with the latest render's handleData
     const handleDataRef = useRef(null);
 
     const handleData = (data, conn) => {
         if (data.type === 'metadata') {
-            console.log("Received Metadata:", data);
-            setFileMeta(data);
-            fileMetaRef.current = data;
+            const meta = data;
+            console.log("Received Metadata:", meta);
+            setFileMeta(meta);
+            fileMetaRef.current = meta;
             setTransferStatus('receiving');
-            chunksRef.current = []; // Clear buffer
+            chunksRef.current = [];
             receivedSizeRef.current = 0;
+
+            // Attempt to open file stream for "unlimited" transfer
+            // We can't use await here easily in the synchronous socket callback without care, 
+            // but we can trigger the prompt. 
+            // However, showSaveFilePicker usually requires user gesture. 
+            // We might need to handle this differently or ask for permission *before* connect, 
+            // OR we just prompt now and hope the browser allows it (it often blocks non-gesture).
+            // Actually, for P2P, we usually accept -> then prompt. 
+            // Let's TRY to prompt here. If it fails (due to no user gesture), we fall back?
+            // BETTER: We should probably rely on a "Accept & Save" button in UI if possible, 
+            // but the current flow is auto-start. 
+            // Let's try the stream setup. If generic, we might need a transient "Click to Accept" state.
+            // For now, let's try strict streaming if possible, else RAM.
+
+            // ASYNC IIFE to handle stream setup
+            (async () => {
+                try {
+                    if (window.showSaveFilePicker) {
+                        const handle = await window.showSaveFilePicker({
+                            suggestedName: meta.name,
+                        });
+                        const writable = await handle.createWritable();
+                        writableStreamRef.current = writable;
+                        console.log("Streaming mode enabled.");
+                    }
+                } catch (err) {
+                    console.warn("Stream setup failed or cancelled (falling back to RAM):", err);
+                }
+            })();
+
             lastProgressTimeRef.current = Date.now();
             lastReceivedSizeRef.current = 0;
             setErrorMsg('');
         }
         else if (data.type === 'chunk') {
-            chunksRef.current.push(data.data);
+            // Write to stream OR RAM
+            if (writableStreamRef.current) {
+                // We should write async but we are in an event handler. 
+                // We need to ensure order. Streams handle this via internal queue usually, 
+                // but strictly we should await. 
+                // Fire and forget (catch error) for now, assuming robust stream.
+                writableStreamRef.current.write(data.data).catch(err => {
+                    console.error("Stream write error:", err);
+                    setErrorMsg("Disk write error");
+                    conn.close();
+                });
+            } else {
+                chunksRef.current.push(data.data);
+            }
+
             receivedSizeRef.current += data.data.byteLength;
 
             // Update Progress & Speed periodically
@@ -51,11 +97,35 @@ export const useFileReceiver = (peer, myId) => {
         }
         else if (data.type === 'end') {
             console.log("Transfer finished.");
+
+            // Finalize
+            (async () => {
+                if (writableStreamRef.current) {
+                    try {
+                        await writableStreamRef.current.close();
+                        console.log("Stream closed.");
+                    } catch (e) { console.error("Stream close error", e); }
+                    writableStreamRef.current = null;
+                }
+            })();
+
+            // Verify integrity
+            if (fileMetaRef.current && receivedSizeRef.current !== fileMetaRef.current.size) {
+                console.warn("Size mismatch!", receivedSizeRef.current, fileMetaRef.current.size);
+                setErrorMsg("Transfer mismatch/corruption detected.");
+                return;
+            }
+
             setTransferStatus('completed');
             setProgress(100);
 
-            // Auto download attempt
-            downloadFile();
+            // Send ACK
+            conn.send({ type: 'ack-end' });
+
+            // Only auto-download if we were buffering (RAM mode)
+            if (!writableStreamRef.current) {
+                downloadFile();
+            }
         }
     };
 
@@ -142,6 +212,7 @@ export const useFileReceiver = (peer, myId) => {
     const resetReceiver = () => {
         setFileMeta(null);
         fileMetaRef.current = null;
+        writableStreamRef.current = null; // Clear stream ref
         setTransferStatus('idle');
         setProgress(0);
         setSpeed(0);
@@ -160,8 +231,10 @@ export const useFileReceiver = (peer, myId) => {
         progress,
         speed,
         errorMsg,
+        isStreaming: !!writableStreamRef.current, // Expose if we are using streaming mode
         connectToSender,
         downloadFile,
         resetReceiver
     };
 };
+
