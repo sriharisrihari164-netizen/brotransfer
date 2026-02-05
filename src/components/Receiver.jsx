@@ -5,6 +5,7 @@ import { useFileReceiver } from '../hooks/useFileReceiver';
 const Receiver = ({ onReset }) => {
     const [code, setCode] = useState('');
     const [refreshTimer, setRefreshTimer] = useState(null);
+    const [autoRefresh, setAutoRefresh] = useState(true); // Default to true for reliability
     const { peer, myId, status: peerStatus, error: peerError } = usePeer();
     const {
         fileMeta,
@@ -20,7 +21,7 @@ const Receiver = ({ onReset }) => {
 
     // Auto-Refresh Logic
     useEffect(() => {
-        if (transferStatus === 'completed') {
+        if (transferStatus === 'completed' && autoRefresh) {
             setRefreshTimer(5); // Start 5s countdown
             const timer = setInterval(() => {
                 setRefreshTimer(prev => {
@@ -33,8 +34,10 @@ const Receiver = ({ onReset }) => {
                 });
             }, 1000);
             return () => clearInterval(timer);
+        } else {
+            setRefreshTimer(null); // Reset if toggled off
         }
-    }, [transferStatus]);
+    }, [transferStatus, autoRefresh]);
 
     const handleConnect = (e) => {
         e.preventDefault();
@@ -156,10 +159,24 @@ const Receiver = ({ onReset }) => {
                                 </button>
                             )}
 
-                            {/* Auto-Refresh Message */}
-                            <div style={{ margin: '1rem 0', color: 'var(--accent-primary)', fontWeight: 'bold' }}>
-                                Refreshing in {refreshTimer}s...
+                            {/* Auto-Refresh Message & Toggle */}
+                            {autoRefresh && (
+                                <div style={{ margin: '1rem 0', color: 'var(--accent-primary)', fontWeight: 'bold' }}>
+                                    Refreshing in {refreshTimer}s...
+                                </div>
+                            )}
+
+                            <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                                <input
+                                    type="checkbox"
+                                    id="autoRefresh"
+                                    checked={autoRefresh}
+                                    onChange={(e) => setAutoRefresh(e.target.checked)}
+                                    style={{ width: '1.2rem', height: '1.2rem', cursor: 'pointer' }}
+                                />
+                                <label htmlFor="autoRefresh" style={{ cursor: 'pointer', opacity: 0.8 }}>Auto-Refresh Website</label>
                             </div>
+
                             <p style={{ fontSize: '0.8rem', opacity: 0.6, marginBottom: '1rem' }}>
                                 (Clearing memory for next transfer)
                             </p>
