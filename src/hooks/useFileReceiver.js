@@ -12,6 +12,7 @@ export const useFileReceiver = (peer, myId) => {
     const connectionRef = useRef(null);
     const lastProgressTimeRef = useRef(0);
     const lastReceivedSizeRef = useRef(0);
+    const fileMetaRef = useRef(null);
 
     // Keep handleDataRef up to date with the latest render's handleData
     const handleDataRef = useRef(null);
@@ -20,6 +21,7 @@ export const useFileReceiver = (peer, myId) => {
         if (data.type === 'metadata') {
             console.log("Received Metadata:", data);
             setFileMeta(data);
+            fileMetaRef.current = data;
             setTransferStatus('receiving');
             chunksRef.current = []; // Clear buffer
             receivedSizeRef.current = 0;
@@ -33,8 +35,8 @@ export const useFileReceiver = (peer, myId) => {
 
             // Update Progress & Speed periodically
             const now = Date.now();
-            if (now - lastProgressTimeRef.current > 500 && fileMeta) {
-                const percent = Math.min((receivedSizeRef.current / fileMeta.size) * 100, 100);
+            if (now - lastProgressTimeRef.current > 500 && fileMetaRef.current) {
+                const percent = Math.min((receivedSizeRef.current / fileMetaRef.current.size) * 100, 100);
                 setProgress(percent);
 
                 const bytesNew = receivedSizeRef.current - lastReceivedSizeRef.current;
@@ -105,20 +107,19 @@ export const useFileReceiver = (peer, myId) => {
     }, [peer]);
 
     const downloadFile = useCallback(() => {
-        // ... (Download logic same as before, but accessing ref/state via closure)
-        // Since we are inside the hook, we need access to the CURRENT refs.
-        // But `downloadFile` needs `fileMeta` from state.
-
-        // Note: inside useCallback with dependency [fileMeta], logic is fine.
-        // HOWEVER, `chunksRef` is a ref, so it's always fresh.
-        if (!fileMeta || chunksRef.current.length === 0) return;
+        const meta = fileMetaRef.current;
+        if (!meta || chunksRef.current.length === 0) {
+            console.error("Attempted download with no metadata or empty body.", { meta, chunks: chunksRef.current.length });
+            return;
+        }
 
         try {
-            const blob = new Blob(chunksRef.current, { type: fileMeta.fileType });
+            console.log("Downloading file:", meta.name, "Size:", meta.size);
+            const blob = new Blob(chunksRef.current, { type: meta.fileType });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = fileMeta.name;
+            a.download = meta.name;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -128,10 +129,11 @@ export const useFileReceiver = (peer, myId) => {
             console.error("Download failed:", err);
             setErrorMsg("Failed to construct file. System memory limit might be exceeded.");
         }
-    }, [fileMeta]);
+    }, []);
 
     const resetReceiver = () => {
         setFileMeta(null);
+        fileMetaRef.current = null;
         setTransferStatus('idle');
         setProgress(0);
         setSpeed(0);
