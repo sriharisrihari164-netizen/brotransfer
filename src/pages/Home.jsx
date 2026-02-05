@@ -7,6 +7,7 @@ import Instructions from '../components/Instructions';
 const Home = () => {
     const [mode, setMode] = useState('send'); // 'send' or 'receive'
     const [senderSessionKey, setSenderSessionKey] = useState(0);
+    const [receiverSessionKey, setReceiverSessionKey] = useState(0);
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2rem', width: '100%' }}>
@@ -62,7 +63,10 @@ const Home = () => {
                         onReset={() => setSenderSessionKey(prev => prev + 1)}
                     />
                 ) : (
-                    <Receiver />
+                    <Receiver
+                        key={receiverSessionKey}
+                        onReset={() => setReceiverSessionKey(prev => prev + 1)}
+                    />
                 )}
             </div>
 

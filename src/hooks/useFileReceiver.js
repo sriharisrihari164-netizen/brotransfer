@@ -102,58 +102,65 @@ export const useFileReceiver = (peer, myId) => {
             console.error('Connection error:', err);
             setErrorMsg(err.message || 'Connection failed');
             setTransferStatus('error');
-        });
+        }, [peer]);
 
-    }, [peer]);
+        // Ensure connection is closed when component unmounts
+        useEffect(() => {
+            return () => {
+                if (connectionRef.current) {
+                    connectionRef.current.close();
+                }
+            };
+        }, []);
 
-    const downloadFile = useCallback(() => {
-        const meta = fileMetaRef.current;
-        if (!meta || chunksRef.current.length === 0) {
-            console.error("Attempted download with no metadata or empty body.", { meta, chunks: chunksRef.current.length });
-            return;
-        }
+        const downloadFile = useCallback(() => {
+            const meta = fileMetaRef.current;
+            if (!meta || chunksRef.current.length === 0) {
+                console.error("Attempted download with no metadata or empty body.", { meta, chunks: chunksRef.current.length });
+                return;
+            }
 
-        try {
-            console.log("Downloading file:", meta.name, "Size:", meta.size);
-            const blob = new Blob(chunksRef.current, { type: meta.fileType });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = meta.name;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            try {
+                console.log("Downloading file:", meta.name, "Size:", meta.size);
+                const blob = new Blob(chunksRef.current, { type: meta.fileType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = meta.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
 
-            setTimeout(() => URL.revokeObjectURL(url), 10000); // 10s delay
-        } catch (err) {
-            console.error("Download failed:", err);
-            setErrorMsg("Failed to construct file. System memory limit might be exceeded.");
-        }
-    }, []);
+                setTimeout(() => URL.revokeObjectURL(url), 10000); // 10s delay
+            } catch (err) {
+                console.error("Download failed:", err);
+                setErrorMsg("Failed to construct file. System memory limit might be exceeded.");
+            }
+        }, []);
 
-    const resetReceiver = () => {
-        setFileMeta(null);
-        fileMetaRef.current = null;
-        setTransferStatus('idle');
-        setProgress(0);
-        setSpeed(0);
-        chunksRef.current = [];
-        receivedSizeRef.current = 0;
-        setErrorMsg('');
-        if (connectionRef.current) {
-            connectionRef.current.close();
-            connectionRef.current = null;
-        }
+        const resetReceiver = () => {
+            setFileMeta(null);
+            fileMetaRef.current = null;
+            setTransferStatus('idle');
+            setProgress(0);
+            setSpeed(0);
+            chunksRef.current = [];
+            receivedSizeRef.current = 0;
+            setErrorMsg('');
+            if (connectionRef.current) {
+                connectionRef.current.close();
+                connectionRef.current = null;
+            }
+        };
+
+        return {
+            fileMeta,
+            transferStatus,
+            progress,
+            speed,
+            errorMsg,
+            connectToSender,
+            downloadFile,
+            resetReceiver
+        };
     };
-
-    return {
-        fileMeta,
-        transferStatus,
-        progress,
-        speed,
-        errorMsg,
-        connectToSender,
-        downloadFile,
-        resetReceiver
-    };
-};

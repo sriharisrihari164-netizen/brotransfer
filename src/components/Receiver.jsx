@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { usePeer } from '../hooks/usePeer';
 import { useFileReceiver } from '../hooks/useFileReceiver';
 
-const Receiver = () => {
+const Receiver = ({ onReset }) => {
     const [code, setCode] = useState('');
     const { peer, myId, status: peerStatus, error: peerError } = usePeer();
     const {
@@ -20,6 +20,11 @@ const Receiver = () => {
         e.preventDefault();
         if (code.length !== 6 || !peer) return;
         connectToSender(code);
+    };
+
+    const handleReset = () => {
+        if (onReset) onReset();
+        else resetReceiver();
     };
 
     const formatSpeed = (bytesPerSec) => {
@@ -89,7 +94,7 @@ const Receiver = () => {
                 <div className="glass-card" style={{ textAlign: 'center' }}>
                     <div className="spinner" style={{ margin: '0 auto 1.5rem' }}></div>
                     <h2>{transferStatus === 'connecting' ? 'Connecting to Peer...' : 'Waiting for Metadata...'}</h2>
-                    <button className="glass-btn" onClick={resetReceiver} style={{ marginTop: '1.5rem' }}>Cancel</button>
+                    <button className="glass-btn" onClick={handleReset} style={{ marginTop: '1.5rem' }}>Cancel</button>
                 </div>
             )}
 
@@ -128,7 +133,7 @@ const Receiver = () => {
 
                             <button
                                 className="glass-btn"
-                                onClick={resetReceiver}
+                                onClick={handleReset}
                             >
                                 Receive Another
                             </button>
@@ -142,7 +147,7 @@ const Receiver = () => {
                 <div className="glass-card" style={{ textAlign: 'center', borderColor: 'var(--error)' }}>
                     <h2 style={{ color: 'var(--error)', marginBottom: '1rem' }}>Error</h2>
                     <p>{errorMsg}</p>
-                    <button className="glass-btn" onClick={resetReceiver} style={{ marginTop: '1rem' }}>Try Again</button>
+                    <button className="glass-btn" onClick={handleReset} style={{ marginTop: '1rem' }}>Try Again</button>
                 </div>
             )}
         </div>
