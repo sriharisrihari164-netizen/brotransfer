@@ -23,6 +23,14 @@ export const useFileReceiver = (peer, myId) => {
         if (data.type === 'metadata') {
             const meta = data;
             console.log("Received Metadata:", meta);
+
+            // Lazy Cleanup: Revoke OLD blobs now that a NEW transfer is starting
+            if (objectUrlsRef.current.length > 0) {
+                console.log("Cleaning up previous file memory...");
+                objectUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+                objectUrlsRef.current = [];
+            }
+
             setFileMeta(meta);
             fileMetaRef.current = meta;
             setTransferStatus('receiving');
@@ -208,13 +216,8 @@ export const useFileReceiver = (peer, myId) => {
             a.click();
             document.body.removeChild(a);
 
-            // Rely on Auto-Refresh (Reload) to clear memory after 5s
-            // Do NOT clear chunks immediately, or fallback button fails if auto-download blocked.
-
-            setTimeout(() => {
-                URL.revokeObjectURL(url);
-                objectUrlsRef.current = objectUrlsRef.current.filter(u => u !== url);
-            }, 5000);
+            // Removed Auto-Cleanup: Blob stays in RAM until next file starts (Lazy Cleanup)
+            // This ensures manual download always works.
 
         } catch (err) {
             console.error("Download failed:", err);

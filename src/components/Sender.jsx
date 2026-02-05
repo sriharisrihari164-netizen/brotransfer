@@ -7,8 +7,6 @@ const Sender = ({ onReset }) => {
     // Generate a stable code for this session
     const code = useMemo(() => Math.floor(100000 + Math.random() * 900000).toString(), []);
     const peerId = `brotransfer-${code}`;
-    const [refreshTimer, setRefreshTimer] = useState(null);
-    const [autoRefresh, setAutoRefresh] = useState(true);
 
     const { peer, status: peerStatus, error: peerError } = usePeer(peerId);
     const {
@@ -19,26 +17,6 @@ const Sender = ({ onReset }) => {
         selectFile,
         resetSender: softReset
     } = useFileSender(peer);
-
-    // Auto-Refresh Logic (Sender Side)
-    useEffect(() => {
-        if (transferStatus === 'completed' && autoRefresh) {
-            setRefreshTimer(5); // Start 5s countdown
-            const timer = setInterval(() => {
-                setRefreshTimer(prev => {
-                    if (prev <= 1) {
-                        clearInterval(timer);
-                        window.location.reload(); // Force Reload
-                        return 0;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
-            return () => clearInterval(timer);
-        } else {
-            setRefreshTimer(null);
-        }
-    }, [transferStatus, autoRefresh]);
 
     const formatSpeed = (bytesPerSec) => {
         if (bytesPerSec < 1024) return bytesPerSec.toFixed(0) + ' B/s';
@@ -137,46 +115,24 @@ const Sender = ({ onReset }) => {
 
                     {transferStatus === 'completed' && (
                         <div className="animate-fade-in" style={{ marginTop: '2rem' }}>
-                            {autoRefresh && (
-                                <div style={{ margin: '1rem 0', color: 'var(--accent-primary)', fontWeight: 'bold' }}>
-                                    Refreshing in {refreshTimer}s...
-                                </div>
-                            )}
+                            <button className="glass-btn primary" onClick={handleReset}>
+                                Send Another File
+                            </button>
+                        </div>
+                    )}
 
-                            <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                                <input
-                                    type="checkbox"
-                                    id="senderAutoRefresh"
-                                    checked={autoRefresh}
-                                    onChange={(e) => setAutoRefresh(e.target.checked)}
-                                    style={{ width: '1.2rem', height: '1.2rem', cursor: 'pointer' }}
-                                />
-                                <label htmlFor="senderAutoRefresh" style={{ cursor: 'pointer', opacity: 0.8 }}>Auto-Refresh Website</label>
-                            </div>
-
-                            <p style={{ fontSize: '0.8rem', opacity: 0.6, marginBottom: '1rem' }}>
-                                (Resetting for next transfer)
-                            </p>
-                            <button className="glass-btn primary" onClick={() => window.location.reload()}>
-                                Send Another File (Refresh Now)
+                    {/* 4. Error State */}
+                    {transferStatus === 'error' && (
+                        <div className="glass-card" style={{ textAlign: 'center', borderColor: 'var(--error)' }}>
+                            <h2 style={{ color: 'var(--error)', marginBottom: '1rem' }}>Transfer Failed</h2>
+                            <p>The connection was lost or interrupted.</p>
+                            <button className="glass-btn" onClick={handleReset} style={{ marginTop: '1.5rem' }}>
+                                Try Again
                             </button>
                         </div>
                     )}
                 </div>
-            )}
-
-            {/* 4. Error State */}
-            {transferStatus === 'error' && (
-                <div className="glass-card" style={{ textAlign: 'center', borderColor: 'var(--error)' }}>
-                    <h2 style={{ color: 'var(--error)', marginBottom: '1rem' }}>Transfer Failed</h2>
-                    <p>The connection was lost or interrupted.</p>
-                    <button className="glass-btn" onClick={handleReset} style={{ marginTop: '1.5rem' }}>
-                        Try Again
-                    </button>
-                </div>
-            )}
-        </div>
-    );
+            );
 };
 
-export default Sender;
+            export default Sender;

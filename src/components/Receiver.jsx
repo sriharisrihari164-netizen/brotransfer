@@ -4,8 +4,6 @@ import { useFileReceiver } from '../hooks/useFileReceiver';
 
 const Receiver = ({ onReset }) => {
     const [code, setCode] = useState('');
-    const [refreshTimer, setRefreshTimer] = useState(null);
-    const [autoRefresh, setAutoRefresh] = useState(true); // Default to true for reliability
     const { peer, myId, status: peerStatus, error: peerError } = usePeer();
     const {
         fileMeta,
@@ -18,26 +16,6 @@ const Receiver = ({ onReset }) => {
         downloadFile,
         resetReceiver
     } = useFileReceiver(peer, myId);
-
-    // Auto-Refresh Logic
-    useEffect(() => {
-        if (transferStatus === 'completed' && autoRefresh) {
-            setRefreshTimer(5); // Start 5s countdown
-            const timer = setInterval(() => {
-                setRefreshTimer(prev => {
-                    if (prev <= 1) {
-                        clearInterval(timer);
-                        window.location.reload(); // Force Reload
-                        return 0;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
-            return () => clearInterval(timer);
-        } else {
-            setRefreshTimer(null); // Reset if toggled off
-        }
-    }, [transferStatus, autoRefresh]);
 
     const handleConnect = (e) => {
         e.preventDefault();
@@ -146,7 +124,6 @@ const Receiver = ({ onReset }) => {
                         <span>{formatSpeed(speed)}</span>
                     </div>
 
-                    {/* Show Download Button if Completed OR Progress is 100% (fallback for stuck transfers) */}
                     {(transferStatus === 'completed' || progress >= 100) && (
                         <div className="animate-fade-in" style={{ marginTop: '2rem' }}>
                             {!isStreaming && (
@@ -159,33 +136,11 @@ const Receiver = ({ onReset }) => {
                                 </button>
                             )}
 
-                            {/* Auto-Refresh Message & Toggle */}
-                            {autoRefresh && (
-                                <div style={{ margin: '1rem 0', color: 'var(--accent-primary)', fontWeight: 'bold' }}>
-                                    Refreshing in {refreshTimer}s...
-                                </div>
-                            )}
-
-                            <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                                <input
-                                    type="checkbox"
-                                    id="autoRefresh"
-                                    checked={autoRefresh}
-                                    onChange={(e) => setAutoRefresh(e.target.checked)}
-                                    style={{ width: '1.2rem', height: '1.2rem', cursor: 'pointer' }}
-                                />
-                                <label htmlFor="autoRefresh" style={{ cursor: 'pointer', opacity: 0.8 }}>Auto-Refresh Website</label>
-                            </div>
-
-                            <p style={{ fontSize: '0.8rem', opacity: 0.6, marginBottom: '1rem' }}>
-                                (Clearing memory for next transfer)
-                            </p>
-
                             <button
                                 className="glass-btn"
-                                onClick={() => window.location.reload()}
+                                onClick={handleReset}
                             >
-                                Refresh Now
+                                Receive Another
                             </button>
                         </div>
                     )}
