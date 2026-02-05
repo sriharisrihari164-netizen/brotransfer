@@ -208,14 +208,13 @@ export const useFileReceiver = (peer, myId) => {
             a.click();
             document.body.removeChild(a);
 
-            // 1. Clear chunks immediately to free RAM
-            chunksRef.current = [];
+            // Rely on Auto-Refresh (Reload) to clear memory after 5s
+            // Do NOT clear chunks immediately, or fallback button fails if auto-download blocked.
 
-            // 2. Revoke URL faster (2s is enough for browser to grab the blob)
             setTimeout(() => {
                 URL.revokeObjectURL(url);
                 objectUrlsRef.current = objectUrlsRef.current.filter(u => u !== url);
-            }, 2000);
+            }, 5000);
 
         } catch (err) {
             console.error("Download failed:", err);
