@@ -124,7 +124,8 @@ const Receiver = ({ onReset }) => {
                         <span>{formatSpeed(speed)}</span>
                     </div>
 
-                    {transferStatus === 'completed' && (
+                    {/* Show Download Button if Completed OR Progress is 100% (fallback for stuck transfers) */}
+                    {(transferStatus === 'completed' || progress >= 100) && (
                         <div className="animate-fade-in" style={{ marginTop: '2rem' }}>
                             {!isStreaming && (
                                 <button
@@ -132,7 +133,7 @@ const Receiver = ({ onReset }) => {
                                     onClick={downloadFile}
                                     style={{ width: '100%', marginBottom: '1rem' }}
                                 >
-                                    Save File
+                                    Download File
                                 </button>
                             )}
 
