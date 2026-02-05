@@ -188,11 +188,14 @@ export const useFileReceiver = (peer, myId) => {
         const meta = fileMetaRef.current;
         if (!meta || chunksRef.current.length === 0) {
             console.error("Attempted download with no metadata or empty body.", { meta, chunks: chunksRef.current.length });
+            alert("Error: No file data found. Please try again.");
             return;
         }
 
         try {
             console.log("Downloading file:", meta.name, "Size:", meta.size);
+            // Debug alert for mobile to confirm function entry
+            // alert(`Generating file: ${meta.name} (${(meta.size / 1024 / 1024).toFixed(2)} MB)`);
             const blob = new Blob(chunksRef.current, { type: meta.fileType });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -205,6 +208,8 @@ export const useFileReceiver = (peer, myId) => {
             setTimeout(() => URL.revokeObjectURL(url), 10000); // 10s delay
         } catch (err) {
             console.error("Download failed:", err);
+            // Critical: Show this to user on mobile
+            alert(`Download Error: ${err.message}. Your device might be out of RAM for this file size.`);
             setErrorMsg("Failed to construct file. System memory limit might be exceeded.");
         }
     }, []);
