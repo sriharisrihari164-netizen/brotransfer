@@ -55,6 +55,13 @@ export const useFileSender = (peer) => {
                     setTransferStatus('completed');
                     setProgress(100);
                 }
+                else if (data && data.type === 'ack-start') {
+                    console.log("Receiver accepted file. Starting transfer...");
+                    setTransferStatus('transferring');
+                    if (fileRef.current) {
+                        requestNextChunk(fileRef.current, 0);
+                    }
+                }
             });
 
             conn.on('error', (err) => {
@@ -111,8 +118,11 @@ export const useFileSender = (peer) => {
             fileType: currentFile.type
         });
 
-        // 2. Request first chunk from Worker
-        requestNextChunk(currentFile, 0);
+        console.log("Metadata sent. Waiting for receiver acceptance...");
+        setTransferStatus('waiting-for-approval');
+
+        // 2. WAIT for 'ack-start' from receiver before sending chunks
+        // requestNextChunk(currentFile, 0); // Removed auto-start
     };
 
     const requestNextChunk = (currentFile, offset) => {

@@ -13,6 +13,7 @@ const Receiver = ({ onReset }) => {
         errorMsg,
         isStreaming,
         connectToSender,
+        acceptFile,
         downloadFile,
         resetReceiver
     } = useFileReceiver(peer, myId);
@@ -96,6 +97,39 @@ const Receiver = ({ onReset }) => {
                     <div className="spinner" style={{ margin: '0 auto 1.5rem' }}></div>
                     <h2>{transferStatus === 'connecting' ? 'Connecting to Peer...' : 'Waiting for Metadata...'}</h2>
                     <button className="glass-btn" onClick={handleReset} style={{ marginTop: '1.5rem' }}>Cancel</button>
+                </div>
+            )}
+
+            {/* 2.5 Approval State (Incoming File) */}
+            {transferStatus === 'asking-permission' && fileMeta && (
+                <div className="glass-card" style={{ textAlign: 'center' }}>
+                    <h2 style={{ marginBottom: '1rem' }}>Incoming File</h2>
+
+                    <div className="glass-input" style={{ marginBottom: '2rem', display: 'inline-block', textAlign: 'left' }}>
+                        <span style={{ opacity: 0.7 }}>File: </span>
+                        <strong>{fileMeta.name}</strong>
+                        <br />
+                        <span style={{ opacity: 0.7, fontSize: '0.8rem' }}>
+                            Size: {(fileMeta.size / (1024 * 1024)).toFixed(2)} MB
+                        </span>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                        <button
+                            className="glass-btn primary"
+                            onClick={acceptFile}
+                            style={{ flex: 1 }}
+                        >
+                            Accept & Download
+                        </button>
+                        <button
+                            className="glass-btn"
+                            onClick={handleReset}
+                            style={{ flex: 1, opacity: 0.7 }}
+                        >
+                            Decline
+                        </button>
+                    </div>
                 </div>
             )}
 

@@ -7,6 +7,7 @@ const Sender = ({ onReset }) => {
     // Generate a stable code for this session
     const code = useMemo(() => Math.floor(100000 + Math.random() * 900000).toString(), []);
     const peerId = `brotransfer-${code}`;
+    const [copied, setCopied] = useState(false);
 
     const { peer, status: peerStatus, error: peerError } = usePeer(peerId);
     const {
@@ -78,6 +79,18 @@ const Sender = ({ onReset }) => {
                     }}>
                         {code}
                     </div>
+
+                    <button
+                        className="glass-btn"
+                        onClick={() => {
+                            navigator.clipboard.writeText(code);
+                            setCopied(true);
+                            setTimeout(() => setCopied(false), 2000);
+                        }}
+                        style={{ fontSize: '0.9rem', padding: '0.5rem 1rem', marginBottom: '1rem' }}
+                    >
+                        {copied ? 'Copied!' : 'Copy Code'}
+                    </button>
 
                     <div style={{ marginTop: '2rem' }}>
                         <div className="spinner"></div>
