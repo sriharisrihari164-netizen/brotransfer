@@ -16,6 +16,10 @@ export const useFileReceiver = (peer, myId) => {
     const writableStreamRef = useRef(null); // For File System Access API
     const objectUrlsRef = useRef([]); // Track created ObjectURLs for cleanup
 
+    // MOBILE FIX: Store the Blob immediately when transfer completes
+    // to prevent mobile memory pressure from clearing the chunks array
+    const pendingBlobRef = useRef(null);
+
     // Keep handleDataRef up to date with the latest render's handleData
     const handleDataRef = useRef(null);
 
@@ -100,15 +104,36 @@ export const useFileReceiver = (peer, myId) => {
             // Send ACK
             conn.send({ type: 'ack-end' });
 
-            // MOBILE FIX: Add delay before auto-download
-            // On mobile, there might be a race condition where the last chunk hasn't been fully stored yet
-            // Wait 200ms to ensure all chunks are in the array
-            if (!writableStreamRef.current) {
-                console.log("Scheduling auto-download in 200ms...");
-                setTimeout(() => {
-                    console.log("Triggering auto-download. Current chunks:", chunksRef.current.length);
-                    downloadFile();
-                }, 200);
+            // MOBILE FIX: Create Blob IMMEDIATELY before any delays or async operations
+            // This prevents mobile browsers from clearing the chunks array due to memory pressure
+            if (!writableStreamRef.current && chunksRef.current.length > 0) {
+                try {
+                    console.log("Creating Blob immediately with", chunksRef.current.length, "chunks");
+                    const blob = new Blob(chunksRef.current, { type: fileMetaRef.current?.fileType });
+
+                    // Verify blob size
+                    if (blob.size !== fileMetaRef.current?.size) {
+                        console.error("Blob size mismatch!", { expected: fileMetaRef.current?.size, actual: blob.size });
+                    }
+
+                    // Store the blob for later download
+                    pendingBlobRef.current = blob;
+                    console.log("Blob created and stored. Size:", blob.size);
+
+                    // Now we can safely clear chunks to free memory
+                    const chunkCount = chunksRef.current.length;
+                    chunksRef.current = [];
+                    console.log(`Cleared ${chunkCount} chunks after creating Blob`);
+
+                    // Trigger download after a small delay for better UX
+                    setTimeout(() => {
+                        console.log("Triggering auto-download from pendingBlob");
+                        downloadFile();
+                    }, 200);
+                } catch (err) {
+                    console.error("Failed to create Blob on transfer end:", err);
+                    setErrorMsg("Memory error: Failed to process file. Try manual download.");
+                }
             }
         }
     };
@@ -198,7 +223,27 @@ export const useFileReceiver = (peer, myId) => {
             return;
         }
 
-        // 2. If not, generate it from chunks
+        // 2. MOBILE FIX: Check if we have a pending Blob (created immediately on transfer end)
+        if (pendingBlobRef.current) {
+            console.log("Using pending Blob for download. Size:", pendingBlobRef.current.size);
+            const blob = pendingBlobRef.current;
+            pendingBlobRef.current = null; // Clear the ref
+
+            const url = URL.createObjectURL(blob);
+            objectUrlsRef.current.push(url);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = meta ? meta.name : 'download';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            console.log("Download triggered from pending Blob");
+            return;
+        }
+
+        // 3. Fallback: Generate from chunks (if they still exist)
         if (!meta || chunksRef.current.length === 0) {
             console.error("Attempted download with no metadata or empty body.", { meta, chunks: chunksRef.current.length });
 
@@ -209,7 +254,8 @@ export const useFileReceiver = (peer, myId) => {
                 hasMeta: !!meta,
                 chunkCount: chunksRef.current.length,
                 receivedSize: receivedSizeRef.current,
-                objectUrls: objectUrlsRef.current.length
+                objectUrls: objectUrlsRef.current.length,
+                hasPendingBlob: !!pendingBlobRef.current
             });
 
             alert("Error: No file data found. The transfer may have completed but the file data was lost (mobile memory issue). Please try again.");
@@ -319,6 +365,7 @@ export const useFileReceiver = (peer, myId) => {
         objectUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
         objectUrlsRef.current = [];
         chunksRef.current = [];
+        pendingBlobRef.current = null; // Clear any pending blob
 
         setFileMeta(null);
         fileMetaRef.current = null;
