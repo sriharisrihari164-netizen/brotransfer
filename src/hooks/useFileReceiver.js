@@ -26,7 +26,7 @@ export const useFileReceiver = (peer, myId) => {
     const handleData = (data, conn) => {
         if (data.type === 'metadata') {
             const meta = data;
-            console.log("Received Metadata:", meta);
+            console.log("Received metadata:", data);
 
             // Lazy Cleanup: Revoke OLD blobs now that a NEW transfer is starting
             if (objectUrlsRef.current.length > 0) {
@@ -35,8 +35,8 @@ export const useFileReceiver = (peer, myId) => {
                 objectUrlsRef.current = [];
             }
 
-            setFileMeta(meta);
-            fileMetaRef.current = meta;
+            fileMetaRef.current = data.meta;
+            setFileMeta(data.meta);
             // Wait for user approval to enable streaming (User Gesture)
             setTransferStatus('asking-permission');
         }
@@ -80,16 +80,19 @@ export const useFileReceiver = (peer, myId) => {
             console.log("Transfer finished. Received size:", receivedSizeRef.current, "Expected:", fileMetaRef.current?.size);
             console.log("Chunks array length:", chunksRef.current.length);
 
-            // Finalize
-            (async () => {
-                if (writableStreamRef.current) {
-                    try {
-                        await writableStreamRef.current.close();
-                        console.log("Stream closed.");
-                    } catch (e) { console.error("Stream close error", e); }
+            // CRITICAL FIX: Properly close stream BEFORE marking as completed
+            if (writableStreamRef.current) {
+                try {
+                    console.log("Closing writable stream...");
+                    await writableStreamRef.current.close();
+                    console.log("Stream closed successfully.");
                     writableStreamRef.current = null;
+                } catch (e) {
+                    console.error("Stream close error", e);
+                    setErrorMsg("Failed to finalize file save");
+                    return;
                 }
-            })();
+            }
 
             // Verify integrity
             if (fileMetaRef.current && receivedSizeRef.current !== fileMetaRef.current.size) {
@@ -106,6 +109,7 @@ export const useFileReceiver = (peer, myId) => {
 
             // MOBILE FIX: Create Blob IMMEDIATELY before any delays or async operations
             // This prevents mobile browsers from clearing the chunks array due to memory pressure
+            // Only do this if we're NOT streaming (chunks mode)
             if (!writableStreamRef.current && chunksRef.current.length > 0) {
                 try {
                     console.log("Creating Blob immediately with", chunksRef.current.length, "chunks");
@@ -134,6 +138,9 @@ export const useFileReceiver = (peer, myId) => {
                     console.error("Failed to create Blob on transfer end:", err);
                     setErrorMsg("Memory error: Failed to process file. Try manual download.");
                 }
+            } else if (writableStreamRef.current === null) {
+                // Stream was used and closed successfully - file is saved!
+                console.log("File saved to disk successfully via streaming.");
             }
         }
     };
