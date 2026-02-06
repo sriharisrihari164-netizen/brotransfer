@@ -24,9 +24,15 @@ const Receiver = ({ onReset }) => {
         connectToSender(code);
     };
 
-    const handleReset = () => {
+    const handleSoftReset = () => {
+        // "Receive Another" -> Keep Code, Keep Connection
+        resetReceiver();
+    };
+
+    const handleNewSession = () => {
+        // "New Session" -> Reset everything, clear code
         if (onReset) onReset();
-        else resetReceiver();
+        else window.location.reload();
     };
 
     const formatSpeed = (bytesPerSec) => {
@@ -96,7 +102,7 @@ const Receiver = ({ onReset }) => {
                 <div className="glass-card" style={{ textAlign: 'center' }}>
                     <div className="spinner" style={{ margin: '0 auto 1.5rem' }}></div>
                     <h2>{transferStatus === 'connecting' ? 'Connecting to Peer...' : 'Waiting for Metadata...'}</h2>
-                    <button className="glass-btn" onClick={handleReset} style={{ marginTop: '1.5rem' }}>Cancel</button>
+                    <button className="glass-btn" onClick={handleSoftReset} style={{ marginTop: '1.5rem' }}>Cancel</button>
                 </div>
             )}
 
@@ -124,7 +130,7 @@ const Receiver = ({ onReset }) => {
                         </button>
                         <button
                             className="glass-btn"
-                            onClick={handleReset}
+                            onClick={handleSoftReset}
                             style={{ flex: 1, opacity: 0.7 }}
                         >
                             Decline
@@ -170,12 +176,21 @@ const Receiver = ({ onReset }) => {
                                 </button>
                             )}
 
-                            <button
-                                className="glass-btn"
-                                onClick={handleReset}
-                            >
-                                Receive Another
-                            </button>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+                                <button
+                                    className="glass-btn"
+                                    onClick={handleSoftReset}
+                                >
+                                    Receive Another
+                                </button>
+                                <button
+                                    className="glass-btn"
+                                    onClick={handleNewSession}
+                                    style={{ opacity: 0.7, fontSize: '0.9rem' }}
+                                >
+                                    New Session
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -186,7 +201,7 @@ const Receiver = ({ onReset }) => {
                 <div className="glass-card" style={{ textAlign: 'center', borderColor: 'var(--error)' }}>
                     <h2 style={{ color: 'var(--error)', marginBottom: '1rem' }}>Error</h2>
                     <p>{errorMsg}</p>
-                    <button className="glass-btn" onClick={handleReset} style={{ marginTop: '1rem' }}>Try Again</button>
+                    <button className="glass-btn" onClick={handleSoftReset} style={{ marginTop: '1rem' }}>Try Again</button>
                 </div>
             )}
         </div>

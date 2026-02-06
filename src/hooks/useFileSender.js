@@ -45,7 +45,10 @@ export const useFileSender = (peer) => {
 
             conn.on('close', () => {
                 console.log("Connection closed.");
-                setTransferStatus(prev => prev === 'completed' ? prev : 'error');
+                // Only react if this is the active connection
+                if (connectionRef.current === conn) {
+                    setTransferStatus(prev => prev === 'completed' ? prev : 'error');
+                }
             });
 
             conn.on('data', (data) => {

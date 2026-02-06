@@ -147,11 +147,13 @@ export const useFileReceiver = (peer, myId) => {
 
         conn.on('close', () => {
             console.log('Sender disconnected');
-            setTransferStatus(prev => {
-                if (prev === 'completed') return prev;
-                setErrorMsg('Sender disconnected prematurely');
-                return 'error';
-            });
+            if (connectionRef.current === conn) {
+                setTransferStatus(prev => {
+                    if (prev === 'completed') return prev;
+                    setErrorMsg('Sender disconnected prematurely');
+                    return 'error';
+                });
+            }
         });
 
         conn.on('error', (err) => {

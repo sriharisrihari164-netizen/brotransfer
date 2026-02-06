@@ -25,10 +25,15 @@ const Sender = ({ onReset }) => {
         return (bytesPerSec / (1024 * 1024)).toFixed(1) + ' MB/s';
     };
 
-    const handleReset = () => {
-        // Trigger parent to re-mount us, getting a fresh Peer ID and clean slate.
+    const handleSoftReset = () => {
+        // "Send Another File" / "Cancel" -> Keep same Peer ID
+        softReset();
+    };
+
+    const handleNewSession = () => {
+        // "New Session" -> Generate NEW Peer ID
         if (onReset) onReset();
-        else softReset(); // Fallback
+        else window.location.reload();
     };
 
     if (peerError) {
@@ -99,7 +104,7 @@ const Sender = ({ onReset }) => {
 
                     <button
                         className="glass-btn"
-                        onClick={handleReset}
+                        onClick={handleSoftReset}
                         style={{ marginTop: '2rem', fontSize: '0.9rem', opacity: 0.7 }}
                     >
                         Cancel
@@ -107,8 +112,7 @@ const Sender = ({ onReset }) => {
                 </div>
             ) : null}
 
-            {/* 3. Transferring State */}
-            {(transferStatus === 'transferring' || transferStatus === 'completed') && (
+            {/* 3. Transferring / Completed State */}            {(transferStatus === 'transferring' || transferStatus === 'completed') && (
                 <div className="glass-card" style={{ textAlign: 'center' }}>
                     <h2 style={{ marginBottom: '1rem' }}>
                         {transferStatus === 'completed' ? 'Sent Successfully!' : 'Sending...'}
@@ -127,25 +131,32 @@ const Sender = ({ onReset }) => {
                     </div>
 
                     {transferStatus === 'completed' && (
-                        <div className="animate-fade-in" style={{ marginTop: '2rem' }}>
-                            <button className="glass-btn primary" onClick={handleReset}>
+                        <div className="animate-fade-in" style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <button className="glass-btn primary" onClick={handleSoftReset}>
                                 Send Another File
                             </button>
-                        </div>
-                    )}
-
-                    {/* 4. Error State */}
-                    {transferStatus === 'error' && (
-                        <div className="glass-card" style={{ textAlign: 'center', borderColor: 'var(--error)' }}>
-                            <h2 style={{ color: 'var(--error)', marginBottom: '1rem' }}>Transfer Failed</h2>
-                            <p>The connection was lost or interrupted.</p>
-                            <button className="glass-btn" onClick={handleReset} style={{ marginTop: '1.5rem' }}>
-                                Try Again
+                            <button className="glass-btn" onClick={handleNewSession} style={{ opacity: 0.7, fontSize: '0.9rem' }}>
+                                New Session
                             </button>
                         </div>
                     )}
                 </div>
-            );
+            )}
+
+            {/* 4. Error State */}
+            {transferStatus === 'error' && (
+                <div className="glass-card" style={{ textAlign: 'center', borderColor: 'var(--error)' }}>
+                    <h2 style={{ color: 'var(--error)', marginBottom: '1rem' }}>Transfer Failed</h2>
+                    <p>The connection was lost or interrupted.</p>
+                    <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                        <button className="glass-btn" onClick={handleSoftReset}>
+                            Try Again
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
 };
 
-            export default Sender;
+export default Sender;
