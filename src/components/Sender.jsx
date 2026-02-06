@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { usePeer } from '../hooks/usePeer';
 import { useFileSender } from '../hooks/useFileSender';
 import FileDrop from './FileDrop';
@@ -157,6 +158,10 @@ const Sender = ({ onReset }) => {
             )}
         </div>
     );
+};
+
+Sender.propTypes = {
+    onReset: PropTypes.func
 };
 
 export default Sender;

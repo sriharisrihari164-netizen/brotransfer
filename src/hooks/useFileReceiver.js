@@ -23,7 +23,7 @@ export const useFileReceiver = (peer, myId) => {
     // Keep handleDataRef up to date with the latest render's handleData
     const handleDataRef = useRef(null);
 
-    const handleData = (data, conn) => {
+    const handleData = async (data, conn) => {
         if (data.type === 'metadata') {
             const meta = data;
             console.log("Received metadata:", data);

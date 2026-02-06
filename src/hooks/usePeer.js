@@ -11,9 +11,6 @@ export const usePeer = (customId = null) => {
     const [status, setStatus] = useState('loading'); // loading, ready, error
     const [error, setError] = useState(null);
 
-    // We only want to create the peer ONCE.
-    const ranOnce = useRef(false);
-
     useEffect(() => {
         // If we have a customId, we might want to wait for it, OR we assume it's stable.
 
@@ -60,6 +57,7 @@ export const usePeer = (customId = null) => {
             setStatus('closed');
         });
 
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setPeer(newPeer);
 
         return () => {

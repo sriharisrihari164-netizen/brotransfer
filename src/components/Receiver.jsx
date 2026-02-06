@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { usePeer } from '../hooks/usePeer';
 import { useFileReceiver } from '../hooks/useFileReceiver';
 
@@ -206,6 +207,10 @@ const Receiver = ({ onReset }) => {
             )}
         </div>
     );
+};
+
+Receiver.propTypes = {
+    onReset: PropTypes.func
 };
 
 export default Receiver;
