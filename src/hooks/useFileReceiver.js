@@ -25,7 +25,6 @@ export const useFileReceiver = (peer, myId) => {
 
     const handleData = async (data, conn) => {
         if (data.type === 'metadata') {
-            const meta = data;
             console.log("Received metadata:", data);
 
             // Lazy Cleanup: Revoke OLD blobs now that a NEW transfer is starting
@@ -35,8 +34,15 @@ export const useFileReceiver = (peer, myId) => {
                 objectUrlsRef.current = [];
             }
 
-            fileMetaRef.current = data.meta;
-            setFileMeta(data.meta);
+            // Sender sends flat metadata object (name, size, fileType), not wrapped in .meta
+            const meta = {
+                name: data.name,
+                size: data.size,
+                fileType: data.fileType
+            };
+
+            fileMetaRef.current = meta;
+            setFileMeta(meta);
             // Wait for user approval to enable streaming (User Gesture)
             setTransferStatus('asking-permission');
         }
