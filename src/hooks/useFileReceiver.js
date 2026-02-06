@@ -214,6 +214,7 @@ export const useFileReceiver = (peer, myId) => {
         };
     }, []);
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     const downloadFile = useCallback(() => {
         const meta = fileMetaRef.current;
 

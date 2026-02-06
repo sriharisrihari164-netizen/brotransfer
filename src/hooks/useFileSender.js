@@ -106,7 +106,7 @@ export const useFileSender = (peer) => {
         return () => {
             worker.terminate();
         };
-    }, []);
+    }, [peer, requestNextChunk, startTransfer]);
 
     const requestNextChunk = useCallback((currentFile, offset) => {
         if (!workerRef.current) return;
@@ -119,7 +119,6 @@ export const useFileSender = (peer) => {
     }, []);
 
     // Recursive function using Ref to avoid dependency cycle
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     const waitForBuffer = useCallback((conn, currentFile, nextOffset) => {
         if (!conn.open) return;
         if (conn.bufferedAmount <= MAX_BUFFER_AMOUNT / 2) {
