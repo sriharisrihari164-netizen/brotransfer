@@ -83,16 +83,20 @@ export const useFileSender = (peer) => {
     }, [peer]);
 
     // Initialize Worker
+    // Keep latest ref for worker callback
+    const handleChunkFromWorkerRef = useRef(null);
+
+    // Initialize Worker
     useEffect(() => {
-        // Create worker
         const worker = new Worker(new URL('../workers/fileWorker.js', import.meta.url));
         workerRef.current = worker;
 
         worker.onmessage = (e) => {
             const { type, data, offset, error } = e.data;
-
             if (type === 'chunk_data') {
-                handleChunkFromWorker(data, offset);
+                if (handleChunkFromWorkerRef.current) {
+                    handleChunkFromWorkerRef.current(data, offset);
+                }
             } else if (type === 'error') {
                 console.error("Worker error:", error);
                 setTransferStatus('error');
@@ -104,31 +108,7 @@ export const useFileSender = (peer) => {
         };
     }, []);
 
-    const startTransfer = async (conn) => {
-        const currentFile = fileRef.current;
-        if (!currentFile) return;
-
-        startTimeRef.current = Date.now();
-        lastProgressTimeRef.current = Date.now();
-        lastOffsetRef.current = 0;
-        offsetRef.current = 0;
-
-        // 1. Send Metadata
-        conn.send({
-            type: 'metadata',
-            name: currentFile.name,
-            size: currentFile.size,
-            fileType: currentFile.type
-        });
-
-        console.log("Metadata sent. Waiting for receiver acceptance...");
-        setTransferStatus('waiting-for-approval');
-
-        // 2. WAIT for 'ack-start' from receiver before sending chunks
-        // requestNextChunk(currentFile, 0); // Removed auto-start
-    };
-
-    const requestNextChunk = (currentFile, offset) => {
+    const requestNextChunk = useCallback((currentFile, offset) => {
         if (!workerRef.current) return;
         workerRef.current.postMessage({
             action: 'read_chunk',
@@ -136,56 +116,21 @@ export const useFileSender = (peer) => {
             offset: offset,
             chunkSize: CHUNK_SIZE
         });
-    };
+    }, []);
 
-    const handleChunkFromWorker = (chunkData, offset) => {
-        const conn = connectionRef.current;
-        const currentFile = fileRef.current;
-
-        if (!conn || !conn.open || !currentFile) return;
-
-        // Send to Peer
-        conn.send({
-            type: 'chunk',
-            data: chunkData,
-            offset: offset
-        });
-
-        offsetRef.current += chunkData.byteLength;
-        updateProgress(currentFile.size);
-
-        // Flow Control & Next Chunk
-        const nextOffset = offset + chunkData.byteLength;
-
-        if (nextOffset >= currentFile.size) {
-            conn.send({ type: 'end' });
-            setTransferStatus('waiting-for-ack');
-            setProgress(100);
-            return;
-        }
-
-        // Check Backpressure
-        if (conn.bufferedAmount > MAX_BUFFER_AMOUNT) {
-            // Wait until buffer clears
-            waitForBuffer(conn, currentFile, nextOffset);
-        } else {
-            // Immediately request next
-            requestNextChunk(currentFile, nextOffset);
-        }
-    };
-
-    const waitForBuffer = (conn, currentFile, nextOffset) => {
+    // Recursive function using Ref to avoid dependency cycle
+    const waitForBuffer = useCallback((conn, currentFile, nextOffset) => {
         if (!conn.open) return;
-        if (conn.bufferedAmount <= MAX_BUFFER_AMOUNT / 2) { // Resume when half empty
+        if (conn.bufferedAmount <= MAX_BUFFER_AMOUNT / 2) {
             requestNextChunk(currentFile, nextOffset);
         } else {
             setTimeout(() => waitForBuffer(conn, currentFile, nextOffset), 50);
         }
-    };
+    }, [requestNextChunk]);
 
-    const updateProgress = (totalSize) => {
+    const updateProgress = useCallback((totalSize) => {
         const now = Date.now();
-        if (now - lastProgressTimeRef.current >= 200) { // Smoother updates (200ms)
+        if (now - lastProgressTimeRef.current >= 200) {
             const percent = Math.min((offsetRef.current / totalSize) * 100, 100);
             setProgress(percent);
 
@@ -198,7 +143,65 @@ export const useFileSender = (peer) => {
             lastProgressTimeRef.current = now;
             lastOffsetRef.current = offsetRef.current;
         }
-    };
+    }, []);
+
+    const handleChunkFromWorker = useCallback((chunkData, offset) => {
+        const conn = connectionRef.current;
+        const currentFile = fileRef.current;
+
+        if (!conn || !conn.open || !currentFile) return;
+
+        conn.send({
+            type: 'chunk',
+            data: chunkData,
+            offset: offset
+        });
+
+        offsetRef.current += chunkData.byteLength;
+        updateProgress(currentFile.size);
+
+        const nextOffset = offset + chunkData.byteLength;
+
+        if (nextOffset >= currentFile.size) {
+            conn.send({ type: 'end' });
+            setTransferStatus('waiting-for-ack');
+            setProgress(100);
+            return;
+        }
+
+        if (conn.bufferedAmount > MAX_BUFFER_AMOUNT) {
+            waitForBuffer(conn, currentFile, nextOffset);
+        } else {
+            requestNextChunk(currentFile, nextOffset);
+        }
+    }, [requestNextChunk, waitForBuffer, updateProgress]);
+
+    // Keep Ref updated
+    useEffect(() => {
+        handleChunkFromWorkerRef.current = handleChunkFromWorker;
+    }, [handleChunkFromWorker]);
+
+    const startTransfer = useCallback((conn) => {
+        const currentFile = fileRef.current;
+        if (!currentFile) return;
+
+        startTimeRef.current = Date.now();
+        lastProgressTimeRef.current = Date.now();
+        lastOffsetRef.current = 0;
+        offsetRef.current = 0;
+
+        conn.send({
+            type: 'metadata',
+            name: currentFile.name,
+            size: currentFile.size,
+            fileType: currentFile.type
+        });
+
+        console.log("Metadata sent. Waiting for receiver acceptance...");
+        setTransferStatus('waiting-for-approval');
+    }, []); // No dependencies needed as it relies on refs/setters
+
+
 
     const selectFile = (selectedFile) => {
         setFile(selectedFile);

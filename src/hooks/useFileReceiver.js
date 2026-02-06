@@ -40,12 +40,11 @@ export const useFileReceiver = (peer, myId) => {
             // Let's do it on acceptance to keep "metadata" handler light.
         }
         else if (data.type === 'chunk') {
-
             lastProgressTimeRef.current = Date.now();
             lastReceivedSizeRef.current = 0;
             setErrorMsg('');
-        }
-        else if (data.type === 'chunk') {
+
+            // Write to stream OR RAM
             // Write to stream OR RAM
             if (writableStreamRef.current) {
                 // We should write async but we are in an event handler. 

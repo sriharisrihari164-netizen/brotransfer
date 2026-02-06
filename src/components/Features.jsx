@@ -1,112 +1,112 @@
 import React from 'react';
 
-const Features = () => {
-    // Shared styles for the circular icon container
-    const IconContainer = ({ children }) => (
-        <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            {/* Small white line above */}
-            <div style={{ width: '40px', height: '4px', background: '#ececec', borderRadius: '2px', marginBottom: '2rem' }}></div>
+// Shared styles for the circular icon container
+const IconContainer = ({ children }) => (
+    <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        {/* Small white line above */}
+        <div style={{ width: '40px', height: '4px', background: '#ececec', borderRadius: '2px', marginBottom: '2rem' }}></div>
 
-            {/* White Circle */}
-            <div style={{
-                width: '120px',
-                height: '120px',
-                background: '#ffffff', // White base
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 4px 15px rgba(255, 255, 255, 0.1)',
-                position: 'relative',
-                overflow: 'hidden'
-            }}>
-                {children}
-            </div>
-        </div>
-    );
-
-    // SVG Icons (Updated to Orange #d35400 strokes for visibility on White background)
-    const Icons = {
-        Cloud: () => (
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7 16.26C4.46062 16.0102 2.76639 13.626 3.19535 11.1147C3.62432 8.60334 6.00222 6.99611 8.5 7.50003C9.4005 3.9069 14.1561 2.91095 16.536 5.81188C18.4907 5.40243 20.4285 6.77702 20.7303 8.75389C21.0321 10.7308 19.5701 12.5029 17.59 12.75" stroke="#d35400" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="12" cy="12" r="9" fill="#d35400" fillOpacity="0.1" />
-            </svg>
-        ),
-        Ruler: () => (
-            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M19 3L5 17L7 19L21 5L19 3Z" fill="#ffcd02" stroke="#d35400" strokeWidth="1.5" />
-                <path d="M15 7L16 8" stroke="#d35400" strokeLinecap="round" />
-                <path d="M13 9L14 10" stroke="#d35400" strokeLinecap="round" />
-                <path d="M11 11L12 12" stroke="#d35400" strokeLinecap="round" />
-                <path d="M9 13L10 14" stroke="#d35400" strokeLinecap="round" />
-            </svg>
-        ),
-        Lock: () => (
-            <svg width="50" height="50" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="5" y="11" width="14" height="10" rx="2" fill="#f1c40f" stroke="#d35400" strokeWidth="2" />
-                <path d="M8 11V7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7V11" stroke="#d35400" strokeWidth="2" strokeLinecap="round" />
-                <circle cx="12" cy="16" r="1.5" fill="#d35400" />
-            </svg>
-        ),
-        Tree: () => (
-            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 21V11" stroke="#8d6e63" strokeWidth="3" strokeLinecap="round" />
-                <path d="M12 3C7.58172 3 4 6.58172 4 11C4 15.4183 7.58172 19 12 19C16.4183 19 20 15.4183 20 11C20 6.58172 16.4183 3 12 3Z" fill="#2ecc71" stroke="#27ae60" strokeWidth="2" />
-                <path d="M9 11L12 8L15 11" stroke="#27ae60" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-        ),
-        Chart: () => (
-            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="3" y="13" width="4" height="8" rx="1" fill="#e74c3c" />
-                <rect x="9" y="8" width="4" height="13" rx="1" fill="#3498db" />
-                <rect x="15" y="4" width="4" height="17" rx="1" fill="#2ecc71" />
-                <path d="M2 22H22" stroke="#d35400" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-        ),
-        Chat: () => (
-            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" fill="#ffffff" stroke="#d35400" strokeWidth="2" />
-                <circle cx="8" cy="10" r="1.5" fill="#d35400" />
-                <circle cx="12" cy="10" r="1.5" fill="#d35400" />
-                <circle cx="16" cy="10" r="1.5" fill="#d35400" />
-            </svg>
-        )
-    };
-
-    const Section = ({ title, description, Icon, customContent }) => (
+        {/* White Circle */}
         <div style={{
+            width: '120px',
+            height: '120px',
+            background: '#ffffff', // White base
+            borderRadius: '50%',
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
-            textAlign: 'center',
-            marginBottom: '6rem'
+            justifyContent: 'center',
+            boxShadow: '0 4px 15px rgba(255, 255, 255, 0.1)',
+            position: 'relative',
+            overflow: 'hidden'
         }}>
-            <IconContainer>
-                {Icon && <Icon />}
-            </IconContainer>
-            <h2 style={{
-                fontSize: '2rem',
-                fontWeight: 'bold',
-                marginBottom: '1.5rem',
-                color: '#ecf0f1'
-            }}>
-                {title}
-            </h2>
-            {description && (
-                <p style={{
-                    fontSize: '1.1rem',
-                    lineHeight: '1.6',
-                    color: '#bdc3c7',
-                    maxWidth: '600px'
-                }}>
-                    {description}
-                </p>
-            )}
-            {customContent}
+            {children}
         </div>
-    );
+    </div>
+);
 
+// SVG Icons (Updated to Orange #d35400 strokes for visibility on White background)
+const Icons = {
+    Cloud: () => (
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 16.26C4.46062 16.0102 2.76639 13.626 3.19535 11.1147C3.62432 8.60334 6.00222 6.99611 8.5 7.50003C9.4005 3.9069 14.1561 2.91095 16.536 5.81188C18.4907 5.40243 20.4285 6.77702 20.7303 8.75389C21.0321 10.7308 19.5701 12.5029 17.59 12.75" stroke="#d35400" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="12" cy="12" r="9" fill="#d35400" fillOpacity="0.1" />
+        </svg>
+    ),
+    Ruler: () => (
+        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 3L5 17L7 19L21 5L19 3Z" fill="#ffcd02" stroke="#d35400" strokeWidth="1.5" />
+            <path d="M15 7L16 8" stroke="#d35400" strokeLinecap="round" />
+            <path d="M13 9L14 10" stroke="#d35400" strokeLinecap="round" />
+            <path d="M11 11L12 12" stroke="#d35400" strokeLinecap="round" />
+            <path d="M9 13L10 14" stroke="#d35400" strokeLinecap="round" />
+        </svg>
+    ),
+    Lock: () => (
+        <svg width="50" height="50" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="5" y="11" width="14" height="10" rx="2" fill="#f1c40f" stroke="#d35400" strokeWidth="2" />
+            <path d="M8 11V7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7V11" stroke="#d35400" strokeWidth="2" strokeLinecap="round" />
+            <circle cx="12" cy="16" r="1.5" fill="#d35400" />
+        </svg>
+    ),
+    Tree: () => (
+        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 21V11" stroke="#8d6e63" strokeWidth="3" strokeLinecap="round" />
+            <path d="M12 3C7.58172 3 4 6.58172 4 11C4 15.4183 7.58172 19 12 19C16.4183 19 20 15.4183 20 11C20 6.58172 16.4183 3 12 3Z" fill="#2ecc71" stroke="#27ae60" strokeWidth="2" />
+            <path d="M9 11L12 8L15 11" stroke="#27ae60" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+    ),
+    Chart: () => (
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="13" width="4" height="8" rx="1" fill="#e74c3c" />
+            <rect x="9" y="8" width="4" height="13" rx="1" fill="#3498db" />
+            <rect x="15" y="4" width="4" height="17" rx="1" fill="#2ecc71" />
+            <path d="M2 22H22" stroke="#d35400" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+    ),
+    Chat: () => (
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" fill="#ffffff" stroke="#d35400" strokeWidth="2" />
+            <circle cx="8" cy="10" r="1.5" fill="#d35400" />
+            <circle cx="12" cy="10" r="1.5" fill="#d35400" />
+            <circle cx="16" cy="10" r="1.5" fill="#d35400" />
+        </svg>
+    )
+};
+
+const Section = ({ title, description, Icon, customContent }) => (
+    <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center',
+        marginBottom: '6rem'
+    }}>
+        <IconContainer>
+            {Icon && <Icon />}
+        </IconContainer>
+        <h2 style={{
+            fontSize: '2rem',
+            fontWeight: 'bold',
+            marginBottom: '1.5rem',
+            color: '#ecf0f1'
+        }}>
+            {title}
+        </h2>
+        {description && (
+            <p style={{
+                fontSize: '1.1rem',
+                lineHeight: '1.6',
+                color: '#bdc3c7',
+                maxWidth: '600px'
+            }}>
+                {description}
+            </p>
+        )}
+        {customContent}
+    </div>
+);
+
+const Features = () => {
     return (
         <div style={{ padding: '4rem 1rem', maxWidth: '800px', margin: '0 auto' }}>
 

@@ -16,15 +16,8 @@ export const usePeer = (customId = null) => {
 
     useEffect(() => {
         // If we have a customId, we might want to wait for it, OR we assume it's stable.
-        // For this app, we generate it once.
-        if (ranOnce.current) return;
-        ranOnce.current = true;
 
         console.log("Initializing Peer with ID:", customId);
-        // Auto-generate ID is handled by PeerJS if we don't pass one, 
-        // but for this app we might want to let the component decide or just use random.
-        // Let's use a random short code logic wrapper for "Sender" later, 
-        // but the base Peer object just needs to exist.
 
         // If customId is provided, use it. Otherwise undefined (random)
         const peerConfig = {
@@ -73,7 +66,7 @@ export const usePeer = (customId = null) => {
             // Clean up: destroy peer when hook unmounts
             newPeer.destroy();
         };
-    }, []);
+    }, [customId]);
 
     return { peer, myId, status, error };
 };

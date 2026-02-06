@@ -1,0 +1,512 @@
+
+> brotransfer@0.0.0 lint
+> eslint .
+
+
+C:\Users\lenovo\brotransfer\src\components\Features.jsx
+  144:14  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  142 |
+  143 |             {/* 2. Features List */}
+> 144 |             <Section
+      |              ^^^^^^^ This component is created during render
+  145 |                 title="Files are shared straight from your device"
+  146 |                 description="When you close the browser tab your files are no longer accessible, minimising the risk of anyone getting unwanted access. BroTransfer uses the peer-to-peer technology WebRTC to find the shortest path, meaning sometimes your data doesn't even have to leave the building!"
+  147 |                 Icon={Icons.Cloud}
+
+   75 |     };
+   76 |
+>  77 |     const Section = ({ title, description, Icon, customContent }) => (
+      |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  78 |         <div style={{
+      | ^^^^^^^^^^^^^^^^^^^^^
+>  79 |             display: 'flex',
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 107 |         </div>
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 108 |     );
+      | ^^^^^^ The component is created during render here
+  109 |
+  110 |     return (
+  111 |         <div style={{ padding: '4rem 1rem', maxWidth: '800px', margin: '0 auto' }}>  react-hooks/static-components
+  150:14  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  148 |             />
+  149 |
+> 150 |             <Section
+      |              ^^^^^^^ This component is created during render
+  151 |                 title="No more file size limits"
+  152 |                 description="Because we don't store the data, there's no need for file size limits. Just share files of any size or whatever amount. As long as you keep an eye on your own data usage."
+  153 |                 Icon={Icons.Ruler}
+
+   75 |     };
+   76 |
+>  77 |     const Section = ({ title, description, Icon, customContent }) => (
+      |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  78 |         <div style={{
+      | ^^^^^^^^^^^^^^^^^^^^^
+>  79 |             display: 'flex',
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 107 |         </div>
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 108 |     );
+      | ^^^^^^ The component is created during render here
+  109 |
+  110 |     return (
+  111 |         <div style={{ padding: '4rem 1rem', maxWidth: '800px', margin: '0 auto' }}>                                                                                                                                              react-hooks/static-components
+  156:14  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  154 |             />
+  155 |
+> 156 |             <Section
+      |              ^^^^^^^ This component is created during render
+  157 |                 title="Only the receiver can access your files"
+  158 |                 description="Only you and the receiver can access your files. Your data is encrypted end-to-end, and can only be read by your receiver (and you of course). BroTransfer currently uses an implementation of DTLS 1.3."
+  159 |                 Icon={Icons.Lock}
+
+   75 |     };
+   76 |
+>  77 |     const Section = ({ title, description, Icon, customContent }) => (
+      |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  78 |         <div style={{
+      | ^^^^^^^^^^^^^^^^^^^^^
+>  79 |             display: 'flex',
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 107 |         </div>
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 108 |     );
+      | ^^^^^^ The component is created during render here
+  109 |
+  110 |     return (
+  111 |         <div style={{ padding: '4rem 1rem', maxWidth: '800px', margin: '0 auto' }}>                                                                                                  react-hooks/static-components
+  162:14  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  160 |             />
+  161 |
+> 162 |             <Section
+      |              ^^^^^^^ This component is created during render
+  163 |                 title="Low environmental impact"
+  164 |                 description="Because we don't store data we don't need bulky servers, and that saves a lot of energy. By using BroTransfer you'll have a much smaller carbon footprint than when using a cloud storage provider."
+  165 |                 Icon={Icons.Tree}
+
+   75 |     };
+   76 |
+>  77 |     const Section = ({ title, description, Icon, customContent }) => (
+      |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  78 |         <div style={{
+      | ^^^^^^^^^^^^^^^^^^^^^
+>  79 |             display: 'flex',
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 107 |         </div>
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 108 |     );
+      | ^^^^^^ The component is created during render here
+  109 |
+  110 |     return (
+  111 |         <div style={{ padding: '4rem 1rem', maxWidth: '800px', margin: '0 auto' }}>                                                                                                                      react-hooks/static-components
+  169:14  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  167 |
+  168 |             {/* 3. Stats / Growth */}
+> 169 |             <Section
+      |              ^^^^^^^ This component is created during render
+  170 |                 title="We keep on growing!"
+  171 |                 description="We started a couple of years ago with just a few users per day, but we now transfer more than 50 terabyte (TB) per month!"
+  172 |                 Icon={Icons.Chart}
+
+   75 |     };
+   76 |
+>  77 |     const Section = ({ title, description, Icon, customContent }) => (
+      |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  78 |         <div style={{
+      | ^^^^^^^^^^^^^^^^^^^^^
+>  79 |             display: 'flex',
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 107 |         </div>
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 108 |     );
+      | ^^^^^^ The component is created during render here
+  109 |
+  110 |     return (
+  111 |         <div style={{ padding: '4rem 1rem', maxWidth: '800px', margin: '0 auto' }}>                                                                                                                                                                             react-hooks/static-components
+  176:14  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  174 |
+  175 |             {/* 4. FAQ */}
+> 176 |             <Section
+      |              ^^^^^^^ This component is created during render
+  177 |                 title="Do you still have questions?"
+  178 |                 Icon={Icons.Chat}
+  179 |                 customContent={
+
+   75 |     };
+   76 |
+>  77 |     const Section = ({ title, description, Icon, customContent }) => (
+      |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  78 |         <div style={{
+      | ^^^^^^^^^^^^^^^^^^^^^
+>  79 |             display: 'flex',
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 107 |         </div>
+      | ^^^^^^^^^^^^^^^^^^^^^
+> 108 |     );
+      | ^^^^^^ The component is created during render here
+  109 |
+  110 |     return (
+  111 |         <div style={{ padding: '4rem 1rem', maxWidth: '800px', margin: '0 auto' }}>                                                                                                                                                                                                                                                                                                        react-hooks/static-components
+
+C:\Users\lenovo\brotransfer\src\components\Instructions.jsx
+  57:18  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  55 |                     Sending Files
+  56 |                 </h3>
+> 57 |                 <Step
+     |                  ^^^^ This component is created during render
+  58 |                     number="1"
+  59 |                     title="Select File"
+  60 |                     text="Click 'Send' and choose the file you want to share."
+
+   2 |
+   3 | const Instructions = () => {
+>  4 |     const Step = ({ number, title, text }) => (
+     |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  5 |         <div style={{
+     | ^^^^^^^^^^^^^^^^^^^^^
+>  6 |             display: 'flex',
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 30 |         </div>
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 31 |     );
+     | ^^^^^^ The component is created during render here
+  32 |
+  33 |     return (
+  34 |         <div className="glass-card" style={{                                                                     react-hooks/static-components
+  62:18  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  60 |                     text="Click 'Send' and choose the file you want to share."
+  61 |                 />
+> 62 |                 <Step
+     |                  ^^^^ This component is created during render
+  63 |                     number="2"
+  64 |                     title="Get Code"
+  65 |                     text="A unique 6-digit code will be generated for your file."
+
+   2 |
+   3 | const Instructions = () => {
+>  4 |     const Step = ({ number, title, text }) => (
+     |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  5 |         <div style={{
+     | ^^^^^^^^^^^^^^^^^^^^^
+>  6 |             display: 'flex',
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 30 |         </div>
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 31 |     );
+     | ^^^^^^ The component is created during render here
+  32 |
+  33 |     return (
+  34 |         <div className="glass-card" style={{                           react-hooks/static-components
+  67:18  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  65 |                     text="A unique 6-digit code will be generated for your file."
+  66 |                 />
+> 67 |                 <Step
+     |                  ^^^^ This component is created during render
+  68 |                     number="3"
+  69 |                     title="Share Code"
+  70 |                     text="Share this code with the person you want to send the file to."
+
+   2 |
+   3 | const Instructions = () => {
+>  4 |     const Step = ({ number, title, text }) => (
+     |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  5 |         <div style={{
+     | ^^^^^^^^^^^^^^^^^^^^^
+>  6 |             display: 'flex',
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 30 |         </div>
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 31 |     );
+     | ^^^^^^ The component is created during render here
+  32 |
+  33 |     return (
+  34 |         <div className="glass-card" style={{               react-hooks/static-components
+  89:18  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  87 |                     Receiving Files
+  88 |                 </h3>
+> 89 |                 <Step
+     |                  ^^^^ This component is created during render
+  90 |                     number="1"
+  91 |                     title="Enter Code"
+  92 |                     text="Click 'Receive' and enter the 6-digit code provided by the sender."
+
+   2 |
+   3 | const Instructions = () => {
+>  4 |     const Step = ({ number, title, text }) => (
+     |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  5 |         <div style={{
+     | ^^^^^^^^^^^^^^^^^^^^^
+>  6 |             display: 'flex',
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 30 |         </div>
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 31 |     );
+     | ^^^^^^ The component is created during render here
+  32 |
+  33 |     return (
+  34 |         <div className="glass-card" style={{                                                     react-hooks/static-components
+  94:18  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  92 |                     text="Click 'Receive' and enter the 6-digit code provided by the sender."
+  93 |                 />
+> 94 |                 <Step
+     |                  ^^^^ This component is created during render
+  95 |                     number="2"
+  96 |                     title="Connect"
+  97 |                     text="Your device will connect securely to the sender."
+
+   2 |
+   3 | const Instructions = () => {
+>  4 |     const Step = ({ number, title, text }) => (
+     |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  5 |         <div style={{
+     | ^^^^^^^^^^^^^^^^^^^^^
+>  6 |             display: 'flex',
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 30 |         </div>
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 31 |     );
+     | ^^^^^^ The component is created during render here
+  32 |
+  33 |     return (
+  34 |         <div className="glass-card" style={{                   react-hooks/static-components
+  99:18  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+   97 |                     text="Your device will connect securely to the sender."
+   98 |                 />
+>  99 |                 <Step
+      |                  ^^^^ This component is created during render
+  100 |                     number="3"
+  101 |                     title="Download"
+  102 |                     text="The file transfer will start automatically. Saving directly to your device."
+
+   2 |
+   3 | const Instructions = () => {
+>  4 |     const Step = ({ number, title, text }) => (
+     |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  5 |         <div style={{
+     | ^^^^^^^^^^^^^^^^^^^^^
+>  6 |             display: 'flex',
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 30 |         </div>
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 31 |     );
+     | ^^^^^^ The component is created during render here
+  32 |
+  33 |     return (
+  34 |         <div className="glass-card" style={{  react-hooks/static-components
+
+C:\Users\lenovo\brotransfer\src\components\Receiver.jsx
+  1:27  error  'useEffect' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\lenovo\brotransfer\src\components\Sender.jsx
+  1:36  error  'useEffect' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         no-unused-vars
+  8:52  error  Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+   6 | const Sender = ({ onReset }) => {
+   7 |     // Generate a stable code for this session
+>  8 |     const code = useMemo(() => Math.floor(100000 + Math.random() * 900000).toString(), []);
+     |                                                    ^^^^^^^^^^^^^ Cannot call impure function
+   9 |     const peerId = `brotransfer-${code}`;
+  10 |     const [copied, setCopied] = useState(false);
+  11 |  react-hooks/purity
+
+C:\Users\lenovo\brotransfer\src\hooks\useFileReceiver.js
+    3:39  error  'myId' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           no-unused-vars
+  112:17  error  Error: Cannot access variable before it is declared
+
+`downloadFile` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  110 |             // Only auto-download if we were buffering (RAM mode)
+  111 |             if (!writableStreamRef.current) {
+> 112 |                 downloadFile();
+      |                 ^^^^^^^^^^^^ `downloadFile` accessed before it is declared
+  113 |             }
+  114 |         }
+  115 |     };
+
+  184 |     }, []);
+  185 |
+> 186 |     const downloadFile = useCallback(() => {
+      |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 187 |         const meta = fileMetaRef.current;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 188 |
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 235 |         }
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 236 |     }, []);
+      | ^^^^^^^^^^^^ `downloadFile` is declared here
+  237 |
+  238 |     const acceptFile = useCallback(async () => {
+  239 |         const meta = fileMetaRef.current;  react-hooks/immutability
+
+C:\Users\lenovo\brotransfer\src\hooks\useFileSender.js
+   43:17  error    Error: Cannot access variable before it is declared
+
+`startTransfer` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  41 |                 console.log("Connection opened! Starting transfer...");
+  42 |                 setTransferStatus('transferring');
+> 43 |                 startTransfer(conn);
+     |                 ^^^^^^^^^^^^^ `startTransfer` accessed before it is declared
+  44 |             });
+  45 |
+  46 |             conn.on('close', () => {
+
+  182 |     }, [handleChunkFromWorker]);
+  183 |
+> 184 |     const startTransfer = useCallback((conn) => {
+      |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 185 |         const currentFile = fileRef.current;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 186 |         if (!currentFile) return;
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 201 |         setTransferStatus('waiting-for-approval');
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 202 |     }, []); // No dependencies needed as it relies on refs/setters
+      | ^^^^^^^^^^^^ `startTransfer` is declared here
+  203 |
+  204 |
+  205 |                                                                                                                                                                                                                                                                                                                                                                                                                            react-hooks/immutability
+   65:25  error    Error: Cannot access variable before it is declared
+
+`requestNextChunk` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  63 |                     setTransferStatus('transferring');
+  64 |                     if (fileRef.current) {
+> 65 |                         requestNextChunk(fileRef.current, 0);
+     |                         ^^^^^^^^^^^^^^^^ `requestNextChunk` accessed before it is declared
+  66 |                     }
+  67 |                 }
+  68 |             });
+
+  109 |     }, []);
+  110 |
+> 111 |     const requestNextChunk = useCallback((currentFile, offset) => {
+      |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 112 |         if (!workerRef.current) return;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 113 |         workerRef.current.postMessage({
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 114 |             action: 'read_chunk',
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 115 |             file: currentFile,
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 116 |             offset: offset,
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 117 |             chunkSize: CHUNK_SIZE
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 118 |         });
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 119 |     }, []);
+      | ^^^^^^^^^^^^ `requestNextChunk` is declared here
+  120 |
+  121 |     // Recursive function using Ref to avoid dependency cycle
+  122 |     const waitForBuffer = useCallback((conn, currentFile, nextOffset) => {  react-hooks/immutability
+   83:8   warning  React Hook useEffect has missing dependencies: 'requestNextChunk' and 'startTransfer'. Either include them or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 react-hooks/exhaustive-deps
+  127:30  error    Error: Cannot access variable before it is declared
+
+`waitForBuffer` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  125 |             requestNextChunk(currentFile, nextOffset);
+  126 |         } else {
+> 127 |             setTimeout(() => waitForBuffer(conn, currentFile, nextOffset), 50);
+      |                              ^^^^^^^^^^^^^ `waitForBuffer` accessed before it is declared
+  128 |         }
+  129 |     }, [requestNextChunk]);
+  130 |
+
+  120 |
+  121 |     // Recursive function using Ref to avoid dependency cycle
+> 122 |     const waitForBuffer = useCallback((conn, currentFile, nextOffset) => {
+      |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 123 |         if (!conn.open) return;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 124 |         if (conn.bufferedAmount <= MAX_BUFFER_AMOUNT / 2) {
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 125 |             requestNextChunk(currentFile, nextOffset);
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 126 |         } else {
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 127 |             setTimeout(() => waitForBuffer(conn, currentFile, nextOffset), 50);
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 128 |         }
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 129 |     }, [requestNextChunk]);
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `waitForBuffer` is declared here
+  130 |
+  131 |     const updateProgress = useCallback((totalSize) => {
+  132 |         const now = Date.now();                                                  react-hooks/immutability
+
+C:\Users\lenovo\brotransfer\src\hooks\usePeer.js
+  15:11  error  'ranOnce' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       no-unused-vars
+  63:9   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  61 |         });
+  62 |
+> 63 |         setPeer(newPeer);
+     |         ^^^^^^^ Avoid calling setState() directly within an effect
+  64 |
+  65 |         return () => {
+  66 |             // Clean up: destroy peer when hook unmounts  react-hooks/set-state-in-effect
+
+✖ 23 problems (22 errors, 1 warning)
+
