@@ -194,19 +194,36 @@ export const useFileReceiver = (peer, myId) => {
         // 2. If not, generate it from chunks
         if (!meta || chunksRef.current.length === 0) {
             console.error("Attempted download with no metadata or empty body.", { meta, chunks: chunksRef.current.length });
-            alert("Error: No file data found. Please try again.");
+
+            // MOBILE FIX: On mobile, sometimes the chunks array gets cleared prematurely
+            // Log more details for debugging
+            console.warn("Download failed - no data available. This may be a memory issue on mobile.");
+            console.log("Current state:", {
+                hasMeta: !!meta,
+                chunkCount: chunksRef.current.length,
+                receivedSize: receivedSizeRef.current,
+                objectUrls: objectUrlsRef.current.length
+            });
+
+            alert("Error: No file data found. The transfer may have completed but the file data was lost (mobile memory issue). Please try again.");
             return;
         }
 
         try {
-            console.log("Generating Blob for file:", meta.name, "Size:", meta.size);
+            console.log("Generating Blob for file:", meta.name, "Size:", meta.size, "Chunks:", chunksRef.current.length);
             const blob = new Blob(chunksRef.current, { type: meta.fileType });
 
+            // Verify blob size
+            if (blob.size !== meta.size) {
+                console.error("Blob size mismatch!", { expected: meta.size, actual: blob.size });
+                alert(`Warning: File size mismatch. Expected ${meta.size} bytes, got ${blob.size} bytes.`);
+            }
+
             // CRITICAL MEMORY OPTIMIZATION for Mobile:
-            // Immediately clear the raw chunks array to free RAM *before* other operations if possible, 
-            // or right after. The Blob now holds the data.
-            // We set length to 0 to release references.
+            // Immediately clear the raw chunks array to free RAM *before* other operations
+            const chunkCount = chunksRef.current.length;
             chunksRef.current = [];
+            console.log(`Cleared ${chunkCount} chunks to free memory.`);
 
             const url = URL.createObjectURL(blob);
             objectUrlsRef.current.push(url); // Track URL
@@ -218,7 +235,7 @@ export const useFileReceiver = (peer, myId) => {
             a.click();
             document.body.removeChild(a);
 
-            console.log("Blob created and chunks cleared to save memory.");
+            console.log("Download triggered successfully. Blob created and chunks cleared.");
 
         } catch (err) {
             console.error("Download failed:", err);
@@ -231,14 +248,34 @@ export const useFileReceiver = (peer, myId) => {
         const meta = fileMetaRef.current;
         if (!meta) return;
 
-        // Cleanup previous file memory
+        // MOBILE FIX: Aggressive cleanup before accepting new file
+        console.log("Accepting file: Cleaning up previous transfer memory...");
+
+        // 1. Revoke all previous object URLs
         if (objectUrlsRef.current.length > 0) {
-            console.log("Accepting new file: Cleaning up previous memory...");
-            objectUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
+            objectUrlsRef.current.forEach(url => {
+                try {
+                    URL.revokeObjectURL(url);
+                    console.log("Revoked URL:", url.substring(0, 50) + "...");
+                } catch (e) {
+                    console.warn("Failed to revoke URL:", e);
+                }
+            });
             objectUrlsRef.current = [];
         }
+
+        // 2. Clear chunks array completely
+        chunksRef.current.length = 0;
         chunksRef.current = [];
+
+        // 3. Reset size counter
         receivedSizeRef.current = 0;
+
+        // 4. Force a microtask delay to allow garbage collection on mobile
+        // This gives the browser a chance to free memory before the next transfer
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        console.log("Memory cleanup complete. Ready for new transfer.");
 
         // DISABLED: Streaming (File System Access API) to support "Old UI" preference
         /*
@@ -266,6 +303,7 @@ export const useFileReceiver = (peer, myId) => {
         // Notify Sender to start
         if (connectionRef.current && connectionRef.current.open) {
             connectionRef.current.send({ type: 'ack-start' });
+            console.log("Sent ack-start to sender.");
         }
     }, []);
 
