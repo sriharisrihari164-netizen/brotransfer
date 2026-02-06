@@ -35,7 +35,7 @@ export const useFileReceiver = (peer, myId) => {
             fileMetaRef.current = meta;
             // Wait for user approval to enable streaming (User Gesture)
             setTransferStatus('asking-permission');
-
+        }
         else if (data.type === 'chunk') {
             setErrorMsg('');
 
