@@ -62,6 +62,7 @@ export const useFileReceiver = (peer, myId) => {
                 });
             } else {
                 chunksRef.current.push(data.data);
+                console.log("[CHUNK] Pushed chunk. Total chunks:", chunksRef.current.length, "Total size:", receivedSizeRef.current);
             }
 
             receivedSizeRef.current += data.data.byteLength;
@@ -83,8 +84,9 @@ export const useFileReceiver = (peer, myId) => {
             }
         }
         else if (data.type === 'end') {
-            console.log("Transfer finished. Received size:", receivedSizeRef.current, "Expected:", fileMetaRef.current?.size);
-            console.log("Chunks array length:", chunksRef.current.length);
+            console.log("[END] Transfer finished. Received size:", receivedSizeRef.current, "Expected:", fileMetaRef.current?.size);
+            console.log("[END] Chunks array length:", chunksRef.current.length);
+            console.log("[END] writableStreamRef:", !!writableStreamRef.current);
 
             // CRITICAL FIX: Properly close stream BEFORE marking as completed
             if (writableStreamRef.current) {
@@ -118,8 +120,9 @@ export const useFileReceiver = (peer, myId) => {
             // Only do this if we're NOT streaming (chunks mode)
             if (chunksRef.current.length > 0) {
                 // RAM mode: create blob and trigger download
+                console.log("[BLOB] Starting blob creation. Chunks:", chunksRef.current.length);
                 try {
-                    console.log("RAM mode: Creating Blob immediately with", chunksRef.current.length, "chunks");
+                    console.log("[BLOB] RAM mode: Creating Blob immediately with", chunksRef.current.length, "chunks");
                     const blob = new Blob(chunksRef.current, { type: fileMetaRef.current?.fileType });
 
                     // Verify blob size
@@ -129,7 +132,7 @@ export const useFileReceiver = (peer, myId) => {
 
                     // Store the blob for later download
                     pendingBlobRef.current = blob;
-                    console.log("Blob created and stored. Size:", blob.size);
+                    console.log("[BLOB] ✅ Blob created and stored. Size:", blob.size, "Blob valid:", !!blob);
 
                     // Now we can safely clear chunks to free memory
                     const chunkCount = chunksRef.current.length;
@@ -223,7 +226,14 @@ export const useFileReceiver = (peer, myId) => {
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const downloadFile = useCallback(() => {
+        console.log("[DOWNLOAD] downloadFile called");
         const meta = fileMetaRef.current;
+        console.log("[DOWNLOAD] State check:", {
+            hasMeta: !!meta,
+            objectUrls: objectUrlsRef.current.length,
+            hasPendingBlob: !!pendingBlobRef.current,
+            chunks: chunksRef.current.length
+        });
 
         // 1. Check if we already have a generated URL (reuse it)
         if (objectUrlsRef.current.length > 0) {
@@ -242,7 +252,8 @@ export const useFileReceiver = (peer, myId) => {
         if (pendingBlobRef.current) {
             console.log("Using pending Blob for download. Size:", pendingBlobRef.current.size);
             const blob = pendingBlobRef.current;
-            pendingBlobRef.current = null; // Clear the ref
+            // DON'T clear pendingBlob - but URL will be stored in objectUrlsRef for reuse
+            // pendingBlobRef.current = null; 
 
             const url = URL.createObjectURL(blob);
             objectUrlsRef.current.push(url);
@@ -254,7 +265,7 @@ export const useFileReceiver = (peer, myId) => {
             a.click();
             document.body.removeChild(a);
 
-            console.log("Download triggered from pending Blob");
+            console.log("Download triggered from pending Blob. URL saved for reuse.");
             return;
         }
 
