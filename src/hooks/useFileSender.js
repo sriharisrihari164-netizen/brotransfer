@@ -106,7 +106,8 @@ export const useFileSender = (peer) => {
         return () => {
             worker.terminate();
         };
-    }, [peer, requestNextChunk, startTransfer]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [peer]);
 
     const requestNextChunk = useCallback((currentFile, offset) => {
         if (!workerRef.current) return;
