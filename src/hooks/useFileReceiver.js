@@ -73,7 +73,8 @@ export const useFileReceiver = (peer, myId) => {
             }
         }
         else if (data.type === 'end') {
-            console.log("Transfer finished.");
+            console.log("Transfer finished. Received size:", receivedSizeRef.current, "Expected:", fileMetaRef.current?.size);
+            console.log("Chunks array length:", chunksRef.current.length);
 
             // Finalize
             (async () => {
@@ -99,9 +100,15 @@ export const useFileReceiver = (peer, myId) => {
             // Send ACK
             conn.send({ type: 'ack-end' });
 
-            // Only auto-download if we were buffering (RAM mode)
+            // MOBILE FIX: Add delay before auto-download
+            // On mobile, there might be a race condition where the last chunk hasn't been fully stored yet
+            // Wait 200ms to ensure all chunks are in the array
             if (!writableStreamRef.current) {
-                downloadFile();
+                console.log("Scheduling auto-download in 200ms...");
+                setTimeout(() => {
+                    console.log("Triggering auto-download. Current chunks:", chunksRef.current.length);
+                    downloadFile();
+                }, 200);
             }
         }
     };
