@@ -20,6 +20,9 @@ export const useFileReceiver = (peer, myId) => {
     // to prevent mobile memory pressure from clearing the chunks array
     const pendingBlobRef = useRef(null);
 
+    // Track if streaming was used (persists even after stream closes)
+    const usedStreamingRef = useRef(false);
+
     // Keep handleDataRef up to date with the latest render's handleData
     const handleDataRef = useRef(null);
 
@@ -369,6 +372,7 @@ export const useFileReceiver = (peer, myId) => {
                 });
                 const writable = await handle.createWritable();
                 writableStreamRef.current = writable;
+                usedStreamingRef.current = true; // Mark that streaming is being used
                 console.log("Streaming mode enabled (Direct to Disk). Supports unlimited file sizes!");
             } else {
                 console.log("File System Access API not supported. Using RAM buffering (limited by device memory).");
@@ -404,6 +408,7 @@ export const useFileReceiver = (peer, myId) => {
         setFileMeta(null);
         fileMetaRef.current = null;
         writableStreamRef.current = null; // Clear stream ref
+        usedStreamingRef.current = false; // Reset streaming flag
         setTransferStatus('idle');
         setProgress(0);
         setSpeed(0);
@@ -421,7 +426,7 @@ export const useFileReceiver = (peer, myId) => {
         progress,
         speed,
         errorMsg,
-        isStreaming: !!writableStreamRef.current, // Expose if we are using streaming mode
+        isStreaming: usedStreamingRef.current, // Expose if streaming was used (persists after stream closes)
         connectToSender,
         acceptFile,
         downloadFile,
