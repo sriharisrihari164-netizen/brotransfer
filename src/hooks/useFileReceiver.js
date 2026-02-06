@@ -116,9 +116,10 @@ export const useFileReceiver = (peer, myId) => {
             // MOBILE FIX: Create Blob IMMEDIATELY before any delays or async operations
             // This prevents mobile browsers from clearing the chunks array due to memory pressure
             // Only do this if we're NOT streaming (chunks mode)
-            if (!writableStreamRef.current && chunksRef.current.length > 0) {
+            if (chunksRef.current.length > 0) {
+                // RAM mode: create blob and trigger download
                 try {
-                    console.log("Creating Blob immediately with", chunksRef.current.length, "chunks");
+                    console.log("RAM mode: Creating Blob immediately with", chunksRef.current.length, "chunks");
                     const blob = new Blob(chunksRef.current, { type: fileMetaRef.current?.fileType });
 
                     // Verify blob size
@@ -144,9 +145,9 @@ export const useFileReceiver = (peer, myId) => {
                     console.error("Failed to create Blob on transfer end:", err);
                     setErrorMsg("Memory error: Failed to process file. Try manual download.");
                 }
-            } else if (writableStreamRef.current === null) {
-                // Stream was used and closed successfully - file is saved!
-                console.log("File saved to disk successfully via streaming.");
+            } else {
+                // Streaming mode: file already saved to disk, no download needed
+                console.log("Streaming mode: File saved to disk successfully. No auto-download needed.");
             }
         }
     };
