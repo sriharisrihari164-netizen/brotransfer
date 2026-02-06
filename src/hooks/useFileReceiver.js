@@ -330,8 +330,8 @@ export const useFileReceiver = (peer, myId) => {
 
         console.log("Memory cleanup complete. Ready for new transfer.");
 
-        // DISABLED: Streaming (File System Access API) to support "Old UI" preference
-        /*
+        // STREAMING: File System Access API for unlimited file sizes
+        // Try to use direct-to-disk streaming if supported by browser
         try {
             if (window.showSaveFilePicker) {
                 console.log("Attempting to open File Picker for streaming...");
@@ -340,13 +340,18 @@ export const useFileReceiver = (peer, myId) => {
                 });
                 const writable = await handle.createWritable();
                 writableStreamRef.current = writable;
-                console.log("Streaming mode enabled (Direct to Disk).");
+                console.log("Streaming mode enabled (Direct to Disk). Supports unlimited file sizes!");
+            } else {
+                console.log("File System Access API not supported. Using RAM buffering (limited by device memory).");
             }
         } catch (err) {
             console.warn("Stream setup skipped/cancelled.", err);
-            if (err.name === 'AbortError') return;
+            if (err.name === 'AbortError') {
+                console.log("User cancelled file picker. Aborting transfer.");
+                return; // User cancelled, don't start transfer
+            }
+            console.log("Falling back to RAM buffering mode.");
         }
-        */
 
         setTransferStatus('receiving');
         lastProgressTimeRef.current = Date.now();
