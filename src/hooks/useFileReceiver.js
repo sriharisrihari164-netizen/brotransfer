@@ -36,15 +36,9 @@ export const useFileReceiver = (peer, myId) => {
             // Wait for user approval to enable streaming (User Gesture)
             setTransferStatus('asking-permission');
 
-            // Clean up old chunks/URLs now if needed, or wait until acceptance.
-            // Let's do it on acceptance to keep "metadata" handler light.
-        }
         else if (data.type === 'chunk') {
-            lastProgressTimeRef.current = Date.now();
-            lastReceivedSizeRef.current = 0;
             setErrorMsg('');
 
-            // Write to stream OR RAM
             // Write to stream OR RAM
             if (writableStreamRef.current) {
                 // We should write async but we are in an event handler. 
@@ -80,8 +74,6 @@ export const useFileReceiver = (peer, myId) => {
         }
         else if (data.type === 'end') {
             console.log("Transfer finished.");
-
-
 
             // Finalize
             (async () => {
@@ -248,7 +240,8 @@ export const useFileReceiver = (peer, myId) => {
         chunksRef.current = [];
         receivedSizeRef.current = 0;
 
-        // Try File System Access API (Streaming)
+        // DISABLED: Streaming (File System Access API) to support "Old UI" preference
+        /*
         try {
             if (window.showSaveFilePicker) {
                 console.log("Attempting to open File Picker for streaming...");
@@ -260,14 +253,10 @@ export const useFileReceiver = (peer, myId) => {
                 console.log("Streaming mode enabled (Direct to Disk).");
             }
         } catch (err) {
-            console.warn("Stream setup skipped/cancelled (User Cancelled or Not Supported). Falling back to RAM.", err);
-            // If user cancelled picker, we technically could abort, but usually we fallback or ask again? 
-            // "AbortError" means user clicked cancel.
-            if (err.name === 'AbortError') {
-                // Return early if user cancelled saving, don't start transfer
-                return;
-            }
+            console.warn("Stream setup skipped/cancelled.", err);
+            if (err.name === 'AbortError') return;
         }
+        */
 
         setTransferStatus('receiving');
         lastProgressTimeRef.current = Date.now();
