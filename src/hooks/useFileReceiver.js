@@ -139,11 +139,14 @@ export const useFileReceiver = (peer, myId) => {
                     chunksRef.current = [];
                     console.log(`Cleared ${chunkCount} chunks after creating Blob`);
 
-                    // Trigger download after a small delay for better UX
+                    // DISABLED AUTO-DOWNLOAD: Let user click button manually
+                    /*
                     setTimeout(() => {
                         console.log("Triggering auto-download from pendingBlob");
                         downloadFile();
                     }, 200);
+                    */
+                    console.log("[BLOB] ✅ Blob ready. Click 'Download File' button to download.");
                 } catch (err) {
                     console.error("Failed to create Blob on transfer end:", err);
                     setErrorMsg("Memory error: Failed to process file. Try manual download.");
