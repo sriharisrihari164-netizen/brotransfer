@@ -5,8 +5,7 @@ import Features from '../components/Features';
 import Instructions from '../components/Instructions';
 
 const Home = () => {
-    const [senderSessionKey, setSenderSessionKey] = useState(0);
-    const [receiverSessionKey, setReceiverSessionKey] = useState(0);
+    const [mode, setMode] = useState('send');
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2rem', width: '100%' }}>
@@ -27,30 +26,50 @@ const Home = () => {
                 </p>
             </div>
 
-            {/* Split View Container */}
+            {/* Mode Toggle */}
             <div className="animate-fade-in" style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-                gap: '2rem',
-                width: '100%',
-                maxWidth: '1200px',
-                padding: '0 1rem'
+                display: 'flex',
+                gap: '1rem',
+                padding: '0.5rem',
+                background: 'var(--bg-secondary)',
+                borderRadius: '12px'
             }}>
-                {/* Left Box (Sender) */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <Sender
-                        key={senderSessionKey}
-                        onReset={() => setSenderSessionKey(prev => prev + 1)}
-                    />
-                </div>
+                <button
+                    onClick={() => setMode('send')}
+                    style={{
+                        padding: '0.75rem 2rem',
+                        borderRadius: '8px',
+                        background: mode === 'send' ? 'var(--bg-primary)' : 'transparent',
+                        color: mode === 'send' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                        fontWeight: 'bold',
+                        boxShadow: mode === 'send' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
+                        transition: 'all 0.2s ease',
+                        border: 'none',
+                        cursor: 'pointer'
+                    }}
+                >
+                    Send
+                </button>
+                <button
+                    onClick={() => setMode('receive')}
+                    style={{
+                        padding: '0.75rem 2rem',
+                        borderRadius: '8px',
+                        background: mode === 'receive' ? 'var(--bg-primary)' : 'transparent',
+                        color: mode === 'receive' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                        fontWeight: 'bold',
+                        boxShadow: mode === 'receive' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
+                        transition: 'all 0.2s ease',
+                        border: 'none',
+                        cursor: 'pointer'
+                    }}
+                >
+                    Receive
+                </button>
+            </div>
 
-                {/* Right Box (Receiver) */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <Receiver
-                        key={receiverSessionKey}
-                        onReset={() => setReceiverSessionKey(prev => prev + 1)}
-                    />
-                </div>
+            <div style={{ width: '100%', maxWidth: '600px', padding: '0 1rem' }}>
+                {mode === 'send' ? <Sender /> : <Receiver />}
             </div>
 
             {/* Sections */}
