@@ -6,18 +6,19 @@ const IconContainer = ({ children }) => (
         {/* Small white line above */}
         <div style={{ width: '40px', height: '4px', background: '#ececec', borderRadius: '2px', marginBottom: '2rem' }}></div>
 
-        {/* White Circle */}
+        {/* Black Circle */}
         <div style={{
             width: '120px',
             height: '120px',
-            background: '#ffffff', // White base
+            background: '#1a1a1a', // Black base for modern look
             borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 15px rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 8px 20px rgba(0, 0, 0, 0.4)',
             position: 'relative',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            transition: 'transform 0.3s ease, box-shadow 0.3s ease'
         }}>
             {children}
         </div>
@@ -28,31 +29,31 @@ const IconContainer = ({ children }) => (
 const Icons = {
     Cloud: () => (
         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M7 16.26C4.46062 16.0102 2.76639 13.626 3.19535 11.1147C3.62432 8.60334 6.00222 6.99611 8.5 7.50003C9.4005 3.9069 14.1561 2.91095 16.536 5.81188C18.4907 5.40243 20.4285 6.77702 20.7303 8.75389C21.0321 10.7308 19.5701 12.5029 17.59 12.75" stroke="#d35400" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="12" cy="12" r="9" fill="#d35400" fillOpacity="0.1" />
+            <path d="M7 16.26C4.46062 16.0102 2.76639 13.626 3.19535 11.1147C3.62432 8.60334 6.00222 6.99611 8.5 7.50003C9.4005 3.9069 14.1561 2.91095 16.536 5.81188C18.4907 5.40243 20.4285 6.77702 20.7303 8.75389C21.0321 10.7308 19.5701 12.5029 17.59 12.75" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="12" cy="12" r="9" fill="#ffffff" fillOpacity="0.15" />
         </svg>
     ),
     Ruler: () => (
         <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M19 3L5 17L7 19L21 5L19 3Z" fill="#ffcd02" stroke="#d35400" strokeWidth="1.5" />
-            <path d="M15 7L16 8" stroke="#d35400" strokeLinecap="round" />
-            <path d="M13 9L14 10" stroke="#d35400" strokeLinecap="round" />
-            <path d="M11 11L12 12" stroke="#d35400" strokeLinecap="round" />
-            <path d="M9 13L10 14" stroke="#d35400" strokeLinecap="round" />
+            <path d="M19 3L5 17L7 19L21 5L19 3Z" fill="#ffd700" stroke="#ffffff" strokeWidth="1.5" />
+            <path d="M15 7L16 8" stroke="#ffffff" strokeLinecap="round" />
+            <path d="M13 9L14 10" stroke="#ffffff" strokeLinecap="round" />
+            <path d="M11 11L12 12" stroke="#ffffff" strokeLinecap="round" />
+            <path d="M9 13L10 14" stroke="#ffffff" strokeLinecap="round" />
         </svg>
     ),
     Lock: () => (
         <svg width="50" height="50" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="5" y="11" width="14" height="10" rx="2" fill="#f1c40f" stroke="#d35400" strokeWidth="2" />
-            <path d="M8 11V7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7V11" stroke="#d35400" strokeWidth="2" strokeLinecap="round" />
-            <circle cx="12" cy="16" r="1.5" fill="#d35400" />
+            <rect x="5" y="11" width="14" height="10" rx="2" fill="#ffd700" stroke="#ffffff" strokeWidth="2" />
+            <path d="M8 11V7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7V11" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+            <circle cx="12" cy="16" r="1.5" fill="#ffffff" />
         </svg>
     ),
     Tree: () => (
         <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 21V11" stroke="#8d6e63" strokeWidth="3" strokeLinecap="round" />
-            <path d="M12 3C7.58172 3 4 6.58172 4 11C4 15.4183 7.58172 19 12 19C16.4183 19 20 15.4183 20 11C20 6.58172 16.4183 3 12 3Z" fill="#2ecc71" stroke="#27ae60" strokeWidth="2" />
-            <path d="M9 11L12 8L15 11" stroke="#27ae60" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M12 21V11" stroke="#c4b5a0" strokeWidth="3" strokeLinecap="round" />
+            <path d="M12 3C7.58172 3 4 6.58172 4 11C4 15.4183 7.58172 19 12 19C16.4183 19 20 15.4183 20 11C20 6.58172 16.4183 3 12 3Z" fill="#4ade80" stroke="#ffffff" strokeWidth="2" />
+            <path d="M9 11L12 8L15 11" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
     ),
     Chart: () => (
@@ -65,10 +66,10 @@ const Icons = {
     ),
     Chat: () => (
         <svg width="56" height="56" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" fill="#ffffff" stroke="#d35400" strokeWidth="2" />
-            <circle cx="8" cy="10" r="1.5" fill="#d35400" />
-            <circle cx="12" cy="10" r="1.5" fill="#d35400" />
-            <circle cx="16" cy="10" r="1.5" fill="#d35400" />
+            <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" fill="none" stroke="#ffffff" strokeWidth="2" />
+            <circle cx="8" cy="10" r="1.5" fill="#ffffff" />
+            <circle cx="12" cy="10" r="1.5" fill="#ffffff" />
+            <circle cx="16" cy="10" r="1.5" fill="#ffffff" />
         </svg>
     )
 };
@@ -167,8 +168,8 @@ const Features = () => {
 
             {/* 3. Stats / Growth */}
             <Section
-                title="We keep on growing!"
-                description="We started a couple of years ago with just a few users per day, but we now transfer more than 50 terabyte (TB) per month!"
+                title="Built for unlimited transfers!"
+                description="BroTransfer enables you to share files of any size directly between devices. From small documents to massive video files, transfer gigabytes or even terabytes without worrying about limits or storage costs!"
                 Icon={Icons.Chart}
             />
 

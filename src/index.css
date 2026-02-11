@@ -9,11 +9,17 @@
   --accent-glow: rgba(255, 71, 87, 0.4);
   --success: #2ed573;
   --error: #ff6b6b;
+  --icon-circle-bg: #1a1a1a;
+  --icon-circle-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
 
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {

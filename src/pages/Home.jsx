@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Sender from '../components/Sender';
 import Receiver from '../components/Receiver';
 import Instructions from '../components/Instructions';
+import Features from '../components/Features';
 
 const Home = () => {
     const [mode, setMode] = useState('send');
@@ -72,8 +73,13 @@ const Home = () => {
             </div>
 
             {/* Sections */}
-            <div className="glass-card" style={{ width: '100%', maxWidth: '800px', marginBottom: '4rem', marginTop: '2rem' }}>
+            <div className="glass-card" style={{ width: '100%', maxWidth: '800px', marginBottom: '2rem', marginTop: '2rem' }}>
                 <Instructions />
+            </div>
+
+            {/* Features Section */}
+            <div style={{ width: '100%', marginBottom: '4rem' }}>
+                <Features />
             </div>
         </div>
     );
