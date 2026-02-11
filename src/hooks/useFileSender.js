@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import FileWorker from '../workers/fileWorker.js?worker';
 
 const CHUNK_SIZE = 64 * 1024; // Reverted to 64KB for maximum reliability
 const MAX_BUFFER_AMOUNT = 64 * 1024 * 4; // Tighter buffer control
@@ -88,7 +89,7 @@ export const useFileSender = (peer) => {
 
     // Initialize Worker
     useEffect(() => {
-        const worker = new Worker(new URL('../workers/fileWorker.js', import.meta.url));
+        const worker = new FileWorker();
         workerRef.current = worker;
 
         worker.onmessage = (e) => {
