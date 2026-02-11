@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import Sender from '../components/Sender';
 import Receiver from '../components/Receiver';
-import Features from '../components/Features';
 import Instructions from '../components/Instructions';
 
 const Home = () => {
@@ -76,8 +75,6 @@ const Home = () => {
             <div className="glass-card" style={{ width: '100%', maxWidth: '800px', marginBottom: '4rem', marginTop: '2rem' }}>
                 <Instructions />
             </div>
-
-            <Features />
         </div>
     );
 };
