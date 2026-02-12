@@ -24,15 +24,7 @@ const Header = () => {
         </span>
       </div>
 
-      <a
-        href="https://github.com/sriharisrihari164-netizen/brotransfer"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="glass-btn"
-        style={{ fontSize: '0.9rem', padding: '0.6rem 1.2rem' }}
-      >
-        GitHub
-      </a>
+
     </header>
   );
 };
