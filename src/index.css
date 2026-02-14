@@ -179,3 +179,10 @@ body {
   border-color: var(--glass-highlight);
   transform: translateX(-4px);
 }
+
+.back-to-home:focus-visible {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 15px var(--accent-glow);
+  color: var(--text-primary);
+}
