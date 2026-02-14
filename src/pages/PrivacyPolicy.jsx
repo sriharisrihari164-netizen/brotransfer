@@ -1,8 +1,10 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const PrivacyPolicy = () => {
     return (
         <div className="legal-page-container" style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
+            <Link to="/" className="back-to-home">← Back to Home</Link>
             <h1>Privacy Policy</h1>
             <p>Last updated: {new Date().toLocaleDateString()}</p>
 

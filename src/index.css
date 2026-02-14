@@ -155,3 +155,27 @@ body {
   border-color: var(--accent-primary) !important;
   background: rgba(255, 71, 87, 0.1) !important;
 }
+
+/* Back to Home Link */
+.back-to-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  transition: all 0.3s ease;
+  margin-bottom: 1.5rem;
+}
+
+.back-to-home:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--glass-highlight);
+  transform: translateX(-4px);
+}
