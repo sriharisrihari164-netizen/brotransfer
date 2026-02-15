@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { usePeer } from '../hooks/usePeer';
 import { useFileReceiver } from '../hooks/useFileReceiver';
 
 const Receiver = ({ onReset }) => {
     const [code, setCode] = useState('');
-    const { peer, myId, status: peerStatus, error: peerError } = usePeer();
+    const { peer, myId, status: peerStatus, error: peerError, retry } = usePeer();
     const {
         fileMeta,
         transferStatus,
@@ -47,7 +47,7 @@ const Receiver = ({ onReset }) => {
             <div className="glass-card animate-fade-in" style={{ textAlign: 'center', borderColor: 'var(--error)' }}>
                 <h3 style={{ color: 'var(--error)' }}>Network Error</h3>
                 <p>{peerError.message}</p>
-                <button className="glass-btn" onClick={() => window.location.reload()}>Retry</button>
+                <button className="glass-btn" onClick={() => retry()}>Retry</button>
             </div>
         );
     }

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { usePeer } from '../hooks/usePeer';
 import { useFileSender } from '../hooks/useFileSender';
@@ -6,11 +6,13 @@ import FileDrop from './FileDrop';
 
 const Sender = ({ onReset }) => {
     // Generate a stable code for this session
-    const code = useMemo(() => Math.floor(100000 + Math.random() * 900000).toString(), []);
+    // Uses lazy state initialization to ensure it runs only once
+    const [code] = useState(() => Math.floor(100000 + Math.random() * 900000).toString());
+
     const peerId = `brotransfer-${code}`;
     const [copied, setCopied] = useState(false);
 
-    const { peer, status: peerStatus, error: peerError } = usePeer(peerId);
+    const { peer, status: peerStatus, error: peerError, retry } = usePeer(peerId);
     const {
         file,
         transferStatus,
@@ -42,7 +44,7 @@ const Sender = ({ onReset }) => {
             <div className="glass-card animate-fade-in" style={{ textAlign: 'center', borderColor: 'var(--error)' }}>
                 <h3 style={{ color: 'var(--error)' }}>Connection Error</h3>
                 <p>{peerError.message}</p>
-                <button className="glass-btn" onClick={() => window.location.reload()}>Retry</button>
+                <button className="glass-btn" onClick={() => retry()}>Retry</button>
             </div>
         );
     }

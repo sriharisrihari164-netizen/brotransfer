@@ -12,10 +12,19 @@ export const usePeer = (customId = null) => {
     const [status, setStatus] = useState('loading'); // loading, ready, error
     const [error, setError] = useState(null);
 
+    const [retryCount, setRetryCount] = useState(0);
+
+    const retry = () => {
+        console.log("Manual retry triggered");
+        setError(null);
+        setStatus('loading');
+        setRetryCount(prev => prev + 1);
+    };
+
     useEffect(() => {
         // If we have a customId, we might want to wait for it, OR we assume it's stable.
 
-        console.log("Initializing Peer with ID:", customId);
+        console.log("Initializing Peer with ID:", customId, "Attempt:", retryCount);
 
         // If customId is provided, use it. Otherwise undefined (random)
         const peerConfig = {
@@ -33,39 +42,61 @@ export const usePeer = (customId = null) => {
             console.log('Peer Open. ID:', id);
             setMyId(id);
             setStatus('ready');
+            setError(null); // Clear any previous errors on successful connection
         });
 
         newPeer.on('error', (err) => {
             console.error('Peer Error:', err);
-            setError(err);
-            setStatus('error');
+            // Ignore benign errors or handle specific ones
+            if (err.type === 'peer-unavailable') {
+                // Keep error, let UI handle it
+                setError(err);
+                setStatus('error');
+            } else if (err.type === 'disconnected' || err.type === 'network' || err.type === 'server-error' || err.type === 'socket-error' || err.type === 'socket-closed') {
+                // These might be transient
+                console.log("Transient error detected. Attempting reconnect...");
+                // Don't immediately set error if we can reconnect, or set a "reconnecting" state?
+                // For now, show error but allow retry.
+                setError(err);
+                setStatus('error');
+            } else {
+                setError(err);
+                setStatus('error');
+            }
         });
 
         // Auto-reconnect on disconnect
         newPeer.on('disconnected', () => {
             console.log('Peer disconnected from signaling server. Attempting reconnect...');
-            setStatus('disconnected');
+            // Don't change status to 'error' immediately, wait for reconnect
+            // setStatus('disconnected'); 
+
             // Try to reconnect
             try {
                 newPeer.reconnect();
             } catch (err) {
                 console.error("Reconnect failed:", err);
+                setError(new Error("Connection lost. Please retry."));
+                setStatus('error');
             }
         });
 
         newPeer.on('close', () => {
-            console.log("Peer destroyed/closed.");
-            setStatus('closed');
+            // Only set closed if we didn't initiate a retry/destroy cycle
+            if (!newPeer.destroyed) {
+                console.log("Peer destroyed/closed.");
+                setStatus('closed');
+            }
         });
 
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setPeer(newPeer);
 
         return () => {
-            // Clean up: destroy peer when hook unmounts
+            // Clean up: destroy peer when hook unmounts or prior to re-running effect
             newPeer.destroy();
         };
-    }, [customId]);
+    }, [customId, retryCount]);
 
-    return { peer, myId, status, error };
+    return { peer, myId, status, error, retry };
 };

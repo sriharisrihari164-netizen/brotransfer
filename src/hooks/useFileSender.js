@@ -18,70 +18,6 @@ export const useFileSender = (peer) => {
     const lastOffsetRef = useRef(0);
     const workerRef = useRef(null);
 
-    // Listen for incoming connections
-    useEffect(() => {
-        if (!peer) return;
-
-        const handleConnection = (conn) => {
-            console.log("Sender received connection from:", conn.peer);
-
-            // If no file is selected, we shouldn't really accept, or we might be in weird state.
-            // But with the UI flow, we shouldn't reach here easily without a file.
-            // Using ref to ensure we get the latest file instance without re-binding listener.
-            if (!fileRef.current) {
-                console.warn("Connection received but no file selected. Closing.");
-                conn.close();
-                return;
-            }
-
-            // Validate connection? For now accept all.
-            connectionRef.current = conn;
-            setTransferStatus('connecting');
-
-            conn.on('open', () => {
-                console.log("Connection opened! Starting transfer...");
-                setTransferStatus('transferring');
-                startTransfer(conn);
-            });
-
-            conn.on('close', () => {
-                console.log("Connection closed.");
-                // Only react if this is the active connection
-                if (connectionRef.current === conn) {
-                    setTransferStatus(prev => prev === 'completed' ? prev : 'error');
-                }
-            });
-
-            conn.on('data', (data) => {
-                if (data && data.type === 'ack-end') {
-                    console.log("Received ACK-END from receiver. Transfer complete.");
-                    // Only now do we consider it completed
-                    setTransferStatus('completed');
-                    setProgress(100);
-                }
-                else if (data && data.type === 'ack-start') {
-                    console.log("Receiver accepted file. Starting transfer...");
-                    setTransferStatus('transferring');
-                    if (fileRef.current) {
-                        requestNextChunk(fileRef.current, 0);
-                    }
-                }
-            });
-
-            conn.on('error', (err) => {
-                console.error("Connection error:", err);
-                setTransferStatus('error');
-            });
-        };
-
-        console.log("Sender attached connection listener.");
-        peer.on('connection', handleConnection);
-
-        return () => {
-            peer.off('connection', handleConnection);
-        };
-
-    }, [peer]);
 
     // Initialize Worker
     // Keep latest ref for worker callback
@@ -107,7 +43,7 @@ export const useFileSender = (peer) => {
         return () => {
             worker.terminate();
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+
     }, [peer]);
 
     const requestNextChunk = useCallback((currentFile, offset) => {
@@ -121,14 +57,30 @@ export const useFileSender = (peer) => {
     }, []);
 
     // Recursive function using Ref to avoid dependency cycle
-    const waitForBuffer = useCallback((conn, currentFile, nextOffset) => {
-        if (!conn.open) return;
-        if (conn.bufferedAmount <= MAX_BUFFER_AMOUNT / 2) {
-            requestNextChunk(currentFile, nextOffset);
-        } else {
-            setTimeout(() => waitForBuffer(conn, currentFile, nextOffset), 50);
-        }
+    // Recursive function using Ref to avoid dependency cycle
+    const waitForBufferRef = useRef(null);
+
+    useEffect(() => {
+        waitForBufferRef.current = (conn, currentFile, nextOffset) => {
+            if (!conn.open) return;
+            if (conn.bufferedAmount <= MAX_BUFFER_AMOUNT / 2) {
+                requestNextChunk(currentFile, nextOffset);
+            } else {
+                setTimeout(() => {
+                    if (waitForBufferRef.current) {
+                        waitForBufferRef.current(conn, currentFile, nextOffset);
+                    }
+                }, 50);
+            }
+        };
     }, [requestNextChunk]);
+
+    // Stable callback wrapper
+    const waitForBuffer = useCallback((conn, currentFile, nextOffset) => {
+        if (waitForBufferRef.current) {
+            waitForBufferRef.current(conn, currentFile, nextOffset);
+        }
+    }, []);
 
     const updateProgress = useCallback((totalSize) => {
         const now = Date.now();
@@ -204,6 +156,72 @@ export const useFileSender = (peer) => {
     }, []); // No dependencies needed as it relies on refs/setters
 
 
+
+
+    // Listen for incoming connections
+    useEffect(() => {
+        if (!peer) return;
+
+        const handleConnection = (conn) => {
+            console.log("Sender received connection from:", conn.peer);
+
+            // If no file is selected, we shouldn't really accept, or we might be in weird state.
+            // But with the UI flow, we shouldn't reach here easily without a file.
+            // Using ref to ensure we get the latest file instance without re-binding listener.
+            if (!fileRef.current) {
+                console.warn("Connection received but no file selected. Closing.");
+                conn.close();
+                return;
+            }
+
+            // Validate connection? For now accept all.
+            connectionRef.current = conn;
+            setTransferStatus('connecting');
+
+            conn.on('open', () => {
+                console.log("Connection opened! Starting transfer...");
+                setTransferStatus('transferring');
+                startTransfer(conn);
+            });
+
+            conn.on('close', () => {
+                console.log("Connection closed.");
+                // Only react if this is the active connection
+                if (connectionRef.current === conn) {
+                    setTransferStatus(prev => prev === 'completed' ? prev : 'error');
+                }
+            });
+
+            conn.on('data', (data) => {
+                if (data && data.type === 'ack-end') {
+                    console.log("Received ACK-END from receiver. Transfer complete.");
+                    // Only now do we consider it completed
+                    setTransferStatus('completed');
+                    setProgress(100);
+                }
+                else if (data && data.type === 'ack-start') {
+                    console.log("Receiver accepted file. Starting transfer...");
+                    setTransferStatus('transferring');
+                    if (fileRef.current) {
+                        requestNextChunk(fileRef.current, 0);
+                    }
+                }
+            });
+
+            conn.on('error', (err) => {
+                console.error("Connection error:", err);
+                setTransferStatus('error');
+            });
+        };
+
+        console.log("Sender attached connection listener.");
+        peer.on('connection', handleConnection);
+
+        return () => {
+            peer.off('connection', handleConnection);
+        };
+
+    }, [peer, requestNextChunk, startTransfer]);
 
     const selectFile = (selectedFile) => {
         setFile(selectedFile);

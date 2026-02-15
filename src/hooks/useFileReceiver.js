@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 
-export const useFileReceiver = (peer, myId) => {
+export const useFileReceiver = (peer) => {
     const [fileMeta, setFileMeta] = useState(null);
     const [transferStatus, setTransferStatus] = useState('idle'); // idle, connecting, waiting, receiving, completed, error
     const [progress, setProgress] = useState(0);
@@ -21,7 +21,7 @@ export const useFileReceiver = (peer, myId) => {
     const pendingBlobRef = useRef(null);
 
     // Track if streaming was used (persists even after stream closes)
-    const usedStreamingRef = useRef(false);
+    const [isStreaming, setIsStreaming] = useState(false);
 
     // Keep handleDataRef up to date with the latest render's handleData
     const handleDataRef = useRef(null);
@@ -230,7 +230,7 @@ export const useFileReceiver = (peer, myId) => {
         };
     }, []);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     const downloadFile = useCallback(() => {
         console.log("[DOWNLOAD] downloadFile called");
         const meta = fileMetaRef.current;
@@ -372,7 +372,7 @@ export const useFileReceiver = (peer, myId) => {
                 });
                 const writable = await handle.createWritable();
                 writableStreamRef.current = writable;
-                usedStreamingRef.current = true; // Mark that streaming is being used
+                setIsStreaming(true); // Mark that streaming is being used
                 console.log("Streaming mode enabled (Direct to Disk). Supports unlimited file sizes!");
             } else {
                 console.log("File System Access API not supported. Using RAM buffering (limited by device memory).");
@@ -408,7 +408,7 @@ export const useFileReceiver = (peer, myId) => {
         setFileMeta(null);
         fileMetaRef.current = null;
         writableStreamRef.current = null; // Clear stream ref
-        usedStreamingRef.current = false; // Reset streaming flag
+        setIsStreaming(false); // Reset streaming flag
         setTransferStatus('idle');
         setProgress(0);
         setSpeed(0);
@@ -426,7 +426,7 @@ export const useFileReceiver = (peer, myId) => {
         progress,
         speed,
         errorMsg,
-        isStreaming: usedStreamingRef.current, // Expose if streaming was used (persists after stream closes)
+        isStreaming, // Expose if streaming was used (persists after stream closes)
         connectToSender,
         acceptFile,
         downloadFile,
