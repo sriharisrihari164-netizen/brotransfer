@@ -1,7 +1,7 @@
 import React from 'react';
 import Logo from './Logo';
 
-const Header = () => {
+const Header = ({ onToggleDebug }) => {
   return (
     <header style={{
       display: 'flex',
@@ -10,7 +10,10 @@ const Header = () => {
       padding: '1.5rem 0',
       marginBottom: '2rem'
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <div 
+        onClick={onToggleDebug} 
+        style={{ display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer' }}
+      >
         <Logo size={48} />
         <span style={{
           fontSize: '1.5rem',

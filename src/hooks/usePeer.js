@@ -28,7 +28,11 @@ export const usePeer = (customId = null) => {
         logger.info("Initializing Peer", { id: customId, attempt: retryCount });
 
         // If customId is provided, use it. Otherwise undefined (random)
-        const peerConfig = {
+        const peerOptions = {
+            host: '0.peerjs.com',
+            port: 443,
+            secure: true,
+            debug: 1, // 0: no logs, 1: errors, 2: errors+warnings, 3: all
             config: {
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
@@ -37,30 +41,44 @@ export const usePeer = (customId = null) => {
             }
         };
 
-        const newPeer = customId ? new Peer(customId, peerConfig) : new Peer(peerConfig);
+        const newPeer = customId ? new Peer(customId, peerOptions) : new Peer(peerOptions);
 
         newPeer.on('open', (id) => {
-            logger.success('Peer Open', id);
+            logger.success('Peer Ready!', id);
             setMyId(id);
             setStatus('ready');
-            setError(null); // Clear any previous errors on successful connection
+            setError(null);
         });
 
         newPeer.on('error', (err) => {
-            logger.error('Peer Error', err);
+            logger.error(`PeerJS Error Level: ${err.type}`, err);
             
-            if (err.type === 'unavailable-id') {
-                setError(new Error("This connection code is already in use. Please try again."));
-                setStatus('error');
-            } else if (err.type === 'peer-unavailable') {
-                setError(new Error("Connection failed. The other peer might be offline or using a wrong code."));
-                setStatus('error');
-            } else if (err.type === 'disconnected' || err.type === 'network' || err.type === 'server-error' || err.type === 'socket-error' || err.type === 'socket-closed') {
-                logger.warn("Transient error detected. Attempting reconnect...");
-            } else {
-                setError(err);
-                setStatus('error');
+            let userFriendlyError = err.message || "An unknown connection error occurred.";
+
+            switch (err.type) {
+                case 'unavailable-id':
+                    userFriendlyError = "This connection code is already being used. Please refresh to try another.";
+                    break;
+                case 'peer-unavailable':
+                    userFriendlyError = "Target peer not found. Check if the code is correct and the sender is still online.";
+                    break;
+                case 'network':
+                    userFriendlyError = "Network error. Please check your internet connection.";
+                    break;
+                case 'server-error':
+                case 'socket-error':
+                    userFriendlyError = "Connection to signaling server failed. The service might be temporarily down.";
+                    break;
+                case 'ssl-unavailable':
+                    userFriendlyError = "Secure connection (SSL) is required but not available.";
+                    break;
+                default:
+                    // Keep the original message if not specifically mapped
+                    break;
             }
+
+            setError(new Error(userFriendlyError));
+            setStatus('error');
         });
 
         // Auto-reconnect on disconnect

@@ -180,7 +180,18 @@ export const useFileReceiver = (peer) => {
 
         connectionRef.current = conn;
 
+        // Connection timeout safety
+        const timeoutId = setTimeout(() => {
+            if (connectionRef.current === conn && conn.open === false) {
+                logger.error("Connection attempt timed out");
+                setErrorMsg("Connecting to Peer... Timed out. Please check the code and ensure the sender is ready.");
+                setTransferStatus('error');
+                conn.close();
+            }
+        }, 15000); // 15s timeout
+
         conn.on('open', () => {
+            clearTimeout(timeoutId);
             logger.success('Connected to Sender!');
             setTransferStatus('waiting'); // Waiting for metadata
         });
@@ -193,6 +204,7 @@ export const useFileReceiver = (peer) => {
         });
 
         conn.on('close', () => {
+            clearTimeout(timeoutId);
             logger.info('Sender disconnected');
             if (connectionRef.current === conn) {
                 setTransferStatus(prev => {
@@ -204,8 +216,15 @@ export const useFileReceiver = (peer) => {
         });
 
         conn.on('error', (err) => {
+            clearTimeout(timeoutId);
             logger.error('Connection error', err);
-            setErrorMsg(err.message || 'Connection failed');
+            
+            let msg = err.message || 'Connection failed';
+            if (err.type === 'peer-unavailable') {
+                msg = "Receiver could not find the Sender. This usually means the 6-digit code is incorrect or the Sender session has expired.";
+            }
+
+            setErrorMsg(msg);
             setTransferStatus('error');
         });
     }, [peer]);
