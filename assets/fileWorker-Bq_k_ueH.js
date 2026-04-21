@@ -1,0 +1,1 @@
+(function(){"use strict";self.onmessage=t=>{const{file:a,offset:r,chunkSize:o,action:f}=t.data;if(f==="read_chunk"){const s=new FileReader,l=a.slice(r,r+o);s.onload=e=>{e.target.result&&self.postMessage({type:"chunk_data",data:e.target.result,offset:r},[e.target.result])},s.onerror=e=>{self.postMessage({type:"error",error:e})},s.readAsArrayBuffer(l)}}})();
