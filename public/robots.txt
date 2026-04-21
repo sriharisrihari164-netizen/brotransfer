@@ -1,0 +1,3 @@
+User-agent: *
+Disallow: /Metadata.csv
+Sitemap: https://brotransfer.in/sitemap.xml

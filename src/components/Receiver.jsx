@@ -44,8 +44,8 @@ const Receiver = ({ onReset }) => {
 
     if (peerError) {
         return (
-            <div className="glass-card animate-fade-in" style={{ textAlign: 'center', borderColor: 'var(--error)' }}>
-                <h3 style={{ color: 'var(--error)' }}>Network Error</h3>
+            <div className="glass-card animate-fade-in text-center error-border">
+                <h3 className="error-text">Network Error</h3>
                 <p>{peerError.message}</p>
                 <button className="glass-btn" onClick={() => retry()}>Retry</button>
             </div>
@@ -53,11 +53,11 @@ const Receiver = ({ onReset }) => {
     }
 
     return (
-        <div className="animate-fade-in" style={{ width: '100%', maxWidth: '500px', margin: '0 auto' }}>
+        <div className="animate-fade-in max-w-600 m-auto">
 
             {/* 1. Idle / Entry State */}
             {transferStatus === 'idle' && (
-                <form onSubmit={handleConnect} className="glass-card" style={{ textAlign: 'center' }}>
+                <form onSubmit={handleConnect} className="glass-card text-center">
                     <h2 style={{ marginBottom: '1.5rem' }}>Receive File</h2>
 
                     <div style={{ marginBottom: '2rem' }}>
@@ -73,17 +73,7 @@ const Receiver = ({ onReset }) => {
                             value={code}
                             onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ''))}
                             placeholder="000000"
-                            className="glass-input"
-                            style={{
-                                width: '100%',
-                                maxWidth: '280px',
-                                fontSize: '2.5rem',
-                                letterSpacing: '0.5rem',
-                                textAlign: 'center',
-                                fontFamily: 'monospace',
-                                color: 'var(--accent-primary)',
-                                fontWeight: 'bold'
-                            }}
+                            className="glass-input code-input"
                         />
                     </div>
 
@@ -100,7 +90,7 @@ const Receiver = ({ onReset }) => {
 
             {/* 2. Connecting / Waiting State */}
             {(transferStatus === 'connecting' || transferStatus === 'waiting') && (
-                <div className="glass-card" style={{ textAlign: 'center' }}>
+                <div className="glass-card text-center">
                     <div className="spinner" style={{ margin: '0 auto 1.5rem' }}></div>
                     <h2>{transferStatus === 'connecting' ? 'Connecting to Peer...' : 'Waiting for Metadata...'}</h2>
                     <button className="glass-btn" onClick={handleSoftReset} style={{ marginTop: '1.5rem' }}>Cancel</button>
@@ -109,14 +99,14 @@ const Receiver = ({ onReset }) => {
 
             {/* 2.5 Approval State (Incoming File) */}
             {transferStatus === 'asking-permission' && fileMeta && (
-                <div className="glass-card" style={{ textAlign: 'center' }}>
+                <div className="glass-card text-center">
                     <h2 style={{ marginBottom: '1rem' }}>Incoming File</h2>
 
-                    <div className="glass-input" style={{ marginBottom: '2rem', display: 'inline-block', textAlign: 'left' }}>
-                        <span style={{ opacity: 0.7 }}>File: </span>
+                    <div className="glass-input meta-info">
+                        <span>File: </span>
                         <strong>{fileMeta.name}</strong>
                         <br />
-                        <span style={{ opacity: 0.7, fontSize: '0.8rem' }}>
+                        <span className="size">
                             Size: {(fileMeta.size / (1024 * 1024)).toFixed(2)} MB
                         </span>
                     </div>
@@ -142,7 +132,7 @@ const Receiver = ({ onReset }) => {
 
             {/* 3. Receiving State */}
             {(transferStatus === 'receiving' || transferStatus === 'completed') && fileMeta && (
-                <div className="glass-card" style={{ textAlign: 'center' }}>
+                <div className="glass-card text-center">
                     <h2 style={{ marginBottom: '0.5rem' }}>
                         {transferStatus === 'completed'
                             ? (isStreaming ? 'File Saved!' : 'Download Ready')
@@ -160,9 +150,9 @@ const Receiver = ({ onReset }) => {
                         ></div>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', fontWeight: 'bold' }}>
-                        <span>{Math.round(progress)}%</span>
-                        <span>{formatSpeed(speed)}</span>
+                    <div className="progress-stats">
+                        <span style={{ fontWeight: 'bold' }}>{Math.round(progress)}%</span>
+                        <span style={{ fontWeight: 'bold' }}>{formatSpeed(speed)}</span>
                     </div>
 
                     {(transferStatus === 'completed' || progress >= 100) && (
@@ -177,7 +167,7 @@ const Receiver = ({ onReset }) => {
                                 </button>
                             )}
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
+                            <div className="btn-group-v" style={{ marginTop: '1rem' }}>
                                 <button
                                     className="glass-btn"
                                     onClick={handleSoftReset}
@@ -199,8 +189,8 @@ const Receiver = ({ onReset }) => {
 
             {/* 4. Error State */}
             {transferStatus === 'error' && (
-                <div className="glass-card" style={{ textAlign: 'center', borderColor: 'var(--error)' }}>
-                    <h2 style={{ color: 'var(--error)', marginBottom: '1rem' }}>Error</h2>
+                <div className="glass-card text-center error-border">
+                    <h2 className="error-text" style={{ marginBottom: '1rem' }}>Error</h2>
                     <p>{errorMsg}</p>
                     <button className="glass-btn" onClick={handleSoftReset} style={{ marginTop: '1rem' }}>Try Again</button>
                 </div>

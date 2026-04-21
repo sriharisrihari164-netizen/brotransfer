@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import FileWorker from '../workers/fileWorker.js?worker';
+import { logger } from '../utils/debugLog';
 
 const CHUNK_SIZE = 64 * 1024; // Reverted to 64KB for maximum reliability
 const MAX_BUFFER_AMOUNT = 64 * 1024 * 4; // Tighter buffer control
@@ -35,7 +36,7 @@ export const useFileSender = (peer) => {
                     handleChunkFromWorkerRef.current(data, offset);
                 }
             } else if (type === 'error') {
-                console.error("Worker error:", error);
+                logger.error("Worker error", error);
                 setTransferStatus('error');
             }
         };
@@ -151,7 +152,7 @@ export const useFileSender = (peer) => {
             fileType: currentFile.type
         });
 
-        console.log("Metadata sent. Waiting for receiver acceptance...");
+        logger.info("Metadata sent. Waiting for receiver acceptance...");
         setTransferStatus('waiting-for-approval');
     }, []); // No dependencies needed as it relies on refs/setters
 
@@ -163,13 +164,13 @@ export const useFileSender = (peer) => {
         if (!peer) return;
 
         const handleConnection = (conn) => {
-            console.log("Sender received connection from:", conn.peer);
+            logger.info("Sender received connection from", conn.peer);
 
             // If no file is selected, we shouldn't really accept, or we might be in weird state.
             // But with the UI flow, we shouldn't reach here easily without a file.
             // Using ref to ensure we get the latest file instance without re-binding listener.
             if (!fileRef.current) {
-                console.warn("Connection received but no file selected. Closing.");
+                logger.warn("Connection received but no file selected. Closing.");
                 conn.close();
                 return;
             }
@@ -179,13 +180,13 @@ export const useFileSender = (peer) => {
             setTransferStatus('connecting');
 
             conn.on('open', () => {
-                console.log("Connection opened! Starting transfer...");
+                logger.info("Connection opened! Starting transfer...");
                 setTransferStatus('transferring');
                 startTransfer(conn);
             });
 
             conn.on('close', () => {
-                console.log("Connection closed.");
+                logger.info("Connection closed.");
                 // Only react if this is the active connection
                 if (connectionRef.current === conn) {
                     setTransferStatus(prev => prev === 'completed' ? prev : 'error');
@@ -194,13 +195,13 @@ export const useFileSender = (peer) => {
 
             conn.on('data', (data) => {
                 if (data && data.type === 'ack-end') {
-                    console.log("Received ACK-END from receiver. Transfer complete.");
+                    logger.success("Received ACK-END from receiver. Transfer complete.");
                     // Only now do we consider it completed
                     setTransferStatus('completed');
                     setProgress(100);
                 }
                 else if (data && data.type === 'ack-start') {
-                    console.log("Receiver accepted file. Starting transfer...");
+                    logger.info("Receiver accepted file. Starting transfer...");
                     setTransferStatus('transferring');
                     if (fileRef.current) {
                         requestNextChunk(fileRef.current, 0);
@@ -209,12 +210,12 @@ export const useFileSender = (peer) => {
             });
 
             conn.on('error', (err) => {
-                console.error("Connection error:", err);
+                logger.error("Connection error", err);
                 setTransferStatus('error');
             });
         };
 
-        console.log("Sender attached connection listener.");
+        logger.info("Sender attached connection listener.");
         peer.on('connection', handleConnection);
 
         return () => {

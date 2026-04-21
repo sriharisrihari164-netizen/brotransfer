@@ -8,72 +8,39 @@ const Home = () => {
     const [mode, setMode] = useState('send');
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2rem', width: '100%' }}>
+        <div className="flex-column-center" style={{ gap: '2rem', width: '100%' }}>
 
-            <div style={{ textAlign: 'center', marginTop: '3rem', marginBottom: '1rem' }}>
-                <h1 className="animate-fade-in" style={{
-                    fontSize: '4rem',
-                    marginBottom: '0.5rem',
-                    background: 'linear-gradient(to right, #ffffff, #a0a0a0)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    fontWeight: 800
-                }}>
+            <div className="hero-container">
+                <h1 className="hero-title animate-fade-in">
                     BroTransfer
                 </h1>
-                <p className="animate-fade-in" style={{ fontSize: '1.25rem', color: 'var(--text-secondary)', opacity: 0.8 }}>
+                <p className="hero-subtitle animate-fade-in">
                     Send files without limits.
                 </p>
             </div>
 
             {/* Mode Toggle */}
-            <div className="animate-fade-in" style={{
-                display: 'flex',
-                gap: '1rem',
-                padding: '0.5rem',
-                background: 'var(--bg-secondary)',
-                borderRadius: '12px'
-            }}>
+            <div className="toggle-container animate-fade-in">
                 <button
                     onClick={() => setMode('send')}
-                    style={{
-                        padding: '0.75rem 2rem',
-                        borderRadius: '8px',
-                        background: mode === 'send' ? 'var(--bg-primary)' : 'transparent',
-                        color: mode === 'send' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                        fontWeight: 'bold',
-                        boxShadow: mode === 'send' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
-                        transition: 'all 0.2s ease',
-                        border: 'none',
-                        cursor: 'pointer'
-                    }}
+                    className={`toggle-btn ${mode === 'send' ? 'active' : ''}`}
                 >
                     Send
                 </button>
                 <button
                     onClick={() => setMode('receive')}
-                    style={{
-                        padding: '0.75rem 2rem',
-                        borderRadius: '8px',
-                        background: mode === 'receive' ? 'var(--bg-primary)' : 'transparent',
-                        color: mode === 'receive' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                        fontWeight: 'bold',
-                        boxShadow: mode === 'receive' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
-                        transition: 'all 0.2s ease',
-                        border: 'none',
-                        cursor: 'pointer'
-                    }}
+                    className={`toggle-btn ${mode === 'receive' ? 'active' : ''}`}
                 >
                     Receive
                 </button>
             </div>
 
-            <div style={{ width: '100%', maxWidth: '600px', padding: '0 1rem' }}>
+            <div className="max-w-600 m-auto" style={{ padding: '0 1rem' }}>
                 {mode === 'send' ? <Sender /> : <Receiver />}
             </div>
 
             {/* Sections */}
-            <div className="glass-card" style={{ width: '100%', maxWidth: '800px', marginBottom: '2rem', marginTop: '2rem' }}>
+            <div className="glass-card max-w-800 m-auto" style={{ marginBottom: '2rem', marginTop: '2rem' }}>
                 <Instructions />
             </div>
 

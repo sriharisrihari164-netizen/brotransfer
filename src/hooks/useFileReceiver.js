@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { logger } from '../utils/debugLog';
 
 export const useFileReceiver = (peer) => {
     const [fileMeta, setFileMeta] = useState(null);
@@ -28,11 +29,11 @@ export const useFileReceiver = (peer) => {
 
     const handleData = async (data, conn) => {
         if (data.type === 'metadata') {
-            console.log("Received metadata:", data);
+            logger.info("Received metadata", data);
 
             // Lazy Cleanup: Revoke OLD blobs now that a NEW transfer is starting
             if (objectUrlsRef.current.length > 0) {
-                console.log("Cleaning up previous file memory...");
+                logger.info("Cleaning up previous file memory...");
                 objectUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
                 objectUrlsRef.current = [];
             }
@@ -59,13 +60,13 @@ export const useFileReceiver = (peer) => {
                 // but strictly we should await. 
                 // Fire and forget (catch error) for now, assuming robust stream.
                 writableStreamRef.current.write(data.data).catch(err => {
-                    console.error("Stream write error:", err);
+                    logger.error("Stream write error", err);
                     setErrorMsg("Disk write error");
                     conn.close();
                 });
             } else {
                 chunksRef.current.push(data.data);
-                console.log("[CHUNK] Pushed chunk. Total chunks:", chunksRef.current.length, "Total size:", receivedSizeRef.current);
+                logger.info(`[CHUNK] Pushed chunk. Total chunks: ${chunksRef.current.length}`);
             }
 
             receivedSizeRef.current += data.data.byteLength;
@@ -87,19 +88,19 @@ export const useFileReceiver = (peer) => {
             }
         }
         else if (data.type === 'end') {
-            console.log("[END] Transfer finished. Received size:", receivedSizeRef.current, "Expected:", fileMetaRef.current?.size);
-            console.log("[END] Chunks array length:", chunksRef.current.length);
-            console.log("[END] writableStreamRef:", !!writableStreamRef.current);
+            logger.info("[END] Transfer finished", { received: receivedSizeRef.current, expected: fileMetaRef.current?.size });
+            logger.info(`[END] Chunks array length: ${chunksRef.current.length}`);
+            logger.info(`[END] writableStreamRef: ${!!writableStreamRef.current}`);
 
             // CRITICAL FIX: Properly close stream BEFORE marking as completed
             if (writableStreamRef.current) {
                 try {
-                    console.log("Closing writable stream...");
+                    logger.info("Closing writable stream...");
                     await writableStreamRef.current.close();
-                    console.log("Stream closed successfully.");
+                    logger.success("Stream closed successfully.");
                     writableStreamRef.current = null;
                 } catch (e) {
-                    console.error("Stream close error", e);
+                    logger.error("Stream close error", e);
                     setErrorMsg("Failed to finalize file save");
                     return;
                 }
@@ -107,7 +108,7 @@ export const useFileReceiver = (peer) => {
 
             // Verify integrity
             if (fileMetaRef.current && receivedSizeRef.current !== fileMetaRef.current.size) {
-                console.warn("Size mismatch!", receivedSizeRef.current, fileMetaRef.current.size);
+                logger.warn("Size mismatch!", { received: receivedSizeRef.current, expected: fileMetaRef.current.size });
                 setErrorMsg("Transfer mismatch/corruption detected.");
                 return;
             }
@@ -123,24 +124,24 @@ export const useFileReceiver = (peer) => {
             // Only do this if we're NOT streaming (chunks mode)
             if (chunksRef.current.length > 0) {
                 // RAM mode: create blob and trigger download
-                console.log("[BLOB] Starting blob creation. Chunks:", chunksRef.current.length);
+                logger.info("[BLOB] Starting blob creation", { chunks: chunksRef.current.length });
                 try {
-                    console.log("[BLOB] RAM mode: Creating Blob immediately with", chunksRef.current.length, "chunks");
+                    logger.info("[BLOB] RAM mode: Creating Blob immediately");
                     const blob = new Blob(chunksRef.current, { type: fileMetaRef.current?.fileType });
 
                     // Verify blob size
                     if (blob.size !== fileMetaRef.current?.size) {
-                        console.error("Blob size mismatch!", { expected: fileMetaRef.current?.size, actual: blob.size });
+                        logger.error("Blob size mismatch!", { expected: fileMetaRef.current?.size, actual: blob.size });
                     }
 
                     // Store the blob for later download
                     pendingBlobRef.current = blob;
-                    console.log("[BLOB] ✅ Blob created and stored. Size:", blob.size, "Blob valid:", !!blob);
+                    logger.success("[BLOB] Blob created and stored", { size: blob.size });
 
                     // Now we can safely clear chunks to free memory
                     const chunkCount = chunksRef.current.length;
                     chunksRef.current = [];
-                    console.log(`Cleared ${chunkCount} chunks after creating Blob`);
+                    logger.info(`Cleared ${chunkCount} chunks after creating Blob`);
 
                     // DISABLED AUTO-DOWNLOAD: Let user click button manually
                     /*
@@ -149,14 +150,14 @@ export const useFileReceiver = (peer) => {
                         downloadFile();
                     }, 200);
                     */
-                    console.log("[BLOB] ✅ Blob ready. Click 'Download File' button to download.");
+                    logger.info("[BLOB] Blob ready. Click 'Download File' button to download.");
                 } catch (err) {
-                    console.error("Failed to create Blob on transfer end:", err);
+                    logger.error("Failed to create Blob on transfer end", err);
                     setErrorMsg("Memory error: Failed to process file. Try manual download.");
                 }
             } else {
                 // Streaming mode: file already saved to disk, no download needed
-                console.log("Streaming mode: File saved to disk successfully. No auto-download needed.");
+                logger.success("Streaming mode: File saved to disk successfully.");
             }
         }
     };
@@ -169,7 +170,7 @@ export const useFileReceiver = (peer) => {
         if (!peer || !code) return;
 
         const connId = `brotransfer-${code}`;
-        console.log(`Connecting to Sender: ${connId}`);
+        logger.info(`Connecting to Sender: ${connId}`);
         setTransferStatus('connecting');
         setErrorMsg('');
 
@@ -180,7 +181,7 @@ export const useFileReceiver = (peer) => {
         connectionRef.current = conn;
 
         conn.on('open', () => {
-            console.log('Connected to Sender!');
+            logger.success('Connected to Sender!');
             setTransferStatus('waiting'); // Waiting for metadata
         });
 
@@ -192,7 +193,7 @@ export const useFileReceiver = (peer) => {
         });
 
         conn.on('close', () => {
-            console.log('Sender disconnected');
+            logger.info('Sender disconnected');
             if (connectionRef.current === conn) {
                 setTransferStatus(prev => {
                     if (prev === 'completed') return prev;
@@ -203,7 +204,7 @@ export const useFileReceiver = (peer) => {
         });
 
         conn.on('error', (err) => {
-            console.error('Connection error:', err);
+            logger.error('Connection error', err);
             setErrorMsg(err.message || 'Connection failed');
             setTransferStatus('error');
         });
@@ -217,7 +218,7 @@ export const useFileReceiver = (peer) => {
             }
             // Cleanup Memory on Unmount
             if (objectUrlsRef.current.length > 0) {
-                console.log("Unmounting: Cleaning up file memory...");
+                logger.info("Unmounting: Cleaning up file memory...");
                 objectUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
                 objectUrlsRef.current = [];
             }
@@ -232,9 +233,9 @@ export const useFileReceiver = (peer) => {
 
 
     const downloadFile = useCallback(() => {
-        console.log("[DOWNLOAD] downloadFile called");
+        logger.info("[DOWNLOAD] downloadFile called");
         const meta = fileMetaRef.current;
-        console.log("[DOWNLOAD] State check:", {
+        logger.info("[DOWNLOAD] State check", {
             hasMeta: !!meta,
             objectUrls: objectUrlsRef.current.length,
             hasPendingBlob: !!pendingBlobRef.current,
@@ -243,7 +244,7 @@ export const useFileReceiver = (peer) => {
 
         // 1. Check if we already have a generated URL (reuse it)
         if (objectUrlsRef.current.length > 0) {
-            console.log("Reusing existing Blob URL for download.");
+            logger.info("Reusing existing Blob URL for download.");
             const url = objectUrlsRef.current[0];
             const a = document.createElement('a');
             a.href = url;
@@ -256,7 +257,7 @@ export const useFileReceiver = (peer) => {
 
         // 2. MOBILE FIX: Check if we have a pending Blob (created immediately on transfer end)
         if (pendingBlobRef.current) {
-            console.log("Using pending Blob for download. Size:", pendingBlobRef.current.size);
+            logger.info("Using pending Blob for download", { size: pendingBlobRef.current.size });
             const blob = pendingBlobRef.current;
             // DON'T clear pendingBlob - but URL will be stored in objectUrlsRef for reuse
             // pendingBlobRef.current = null; 
@@ -281,8 +282,8 @@ export const useFileReceiver = (peer) => {
 
             // MOBILE FIX: On mobile, sometimes the chunks array gets cleared prematurely
             // Log more details for debugging
-            console.warn("Download failed - no data available. This may be a memory issue on mobile.");
-            console.log("Current state:", {
+            logger.warn("Download failed - no data available. This may be a memory issue on mobile.");
+            logger.info("Current state", {
                 hasMeta: !!meta,
                 chunkCount: chunksRef.current.length,
                 receivedSize: receivedSizeRef.current,
@@ -295,7 +296,7 @@ export const useFileReceiver = (peer) => {
         }
 
         try {
-            console.log("Generating Blob for file:", meta.name, "Size:", meta.size, "Chunks:", chunksRef.current.length);
+            logger.info("Generating Blob for file", { name: meta.name, size: meta.size, chunks: chunksRef.current.length });
             const blob = new Blob(chunksRef.current, { type: meta.fileType });
 
             // Verify blob size
@@ -341,7 +342,7 @@ export const useFileReceiver = (peer) => {
             objectUrlsRef.current.forEach(url => {
                 try {
                     URL.revokeObjectURL(url);
-                    console.log("Revoked URL:", url.substring(0, 50) + "...");
+                    logger.info(`Revoked URL: ${url.substring(0, 50)}...`);
                 } catch (e) {
                     console.warn("Failed to revoke URL:", e);
                 }
@@ -366,24 +367,24 @@ export const useFileReceiver = (peer) => {
         // Try to use direct-to-disk streaming if supported by browser
         try {
             if (window.showSaveFilePicker) {
-                console.log("Attempting to open File Picker for streaming...");
+                logger.info("Attempting to open File Picker for streaming...");
                 const handle = await window.showSaveFilePicker({
                     suggestedName: meta.name,
                 });
                 const writable = await handle.createWritable();
                 writableStreamRef.current = writable;
                 setIsStreaming(true); // Mark that streaming is being used
-                console.log("Streaming mode enabled (Direct to Disk). Supports unlimited file sizes!");
+                logger.success("Streaming mode enabled (Direct to Disk). Supports unlimited file sizes!");
             } else {
-                console.log("File System Access API not supported. Using RAM buffering (limited by device memory).");
+                logger.info("File System Access API not supported. Using RAM buffering.");
             }
         } catch (err) {
             console.warn("Stream setup skipped/cancelled.", err);
             if (err.name === 'AbortError') {
-                console.log("User cancelled file picker. Aborting transfer.");
+                logger.info("User cancelled file picker. Aborting transfer.");
                 return; // User cancelled, don't start transfer
             }
-            console.log("Falling back to RAM buffering mode.");
+            logger.info("Falling back to RAM buffering mode.");
         }
 
         setTransferStatus('receiving');
@@ -394,7 +395,7 @@ export const useFileReceiver = (peer) => {
         // Notify Sender to start
         if (connectionRef.current && connectionRef.current.open) {
             connectionRef.current.send({ type: 'ack-start' });
-            console.log("Sent ack-start to sender.");
+            logger.info("Sent ack-start to sender.");
         }
     }, []);
 

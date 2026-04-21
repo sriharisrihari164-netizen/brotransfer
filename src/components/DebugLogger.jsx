@@ -7,6 +7,11 @@ const DebugLogger = () => {
     const [isVisible, setIsVisible] = useState(true); // Default to true for user to see immediately
     const logsEndRef = useRef(null);
 
+    // Completely disable in production
+    if (import.meta.env.PROD) {
+        return null;
+    }
+
     useEffect(() => {
         return subscribeLogs((newLogs) => {
             setLogs([...newLogs]); // Create new reference to trigger render

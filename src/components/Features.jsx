@@ -1,31 +1,5 @@
 import React from 'react';
 
-// Shared styles for the circular icon container
-const IconContainer = ({ children }) => (
-    <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        {/* Small white line above */}
-        <div style={{ width: '40px', height: '4px', background: '#ececec', borderRadius: '2px', marginBottom: '2rem' }}></div>
-
-        {/* Black Circle */}
-        <div style={{
-            width: '120px',
-            height: '120px',
-            background: '#1a1a1a', // Black base for modern look
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 8px 20px rgba(0, 0, 0, 0.4)',
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'transform 0.3s ease, box-shadow 0.3s ease'
-        }}>
-            {children}
-        </div>
-    </div>
-);
-
-// SVG Icons (Updated to Orange #d35400 strokes for visibility on White background)
 const Icons = {
     Cloud: () => (
         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -74,32 +48,25 @@ const Icons = {
     )
 };
 
+const IconContainer = ({ children }) => (
+    <div className="icon-wrapper">
+        <div className="icon-divider"></div>
+        <div className="icon-circle">
+            {children}
+        </div>
+    </div>
+);
+
 const Section = ({ title, description, Icon, customContent }) => (
-    <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        textAlign: 'center',
-        marginBottom: '6rem'
-    }}>
+    <div className="feature-section">
         <IconContainer>
             {Icon && <Icon />}
         </IconContainer>
-        <h2 style={{
-            fontSize: '2rem',
-            fontWeight: 'bold',
-            marginBottom: '1.5rem',
-            color: '#ecf0f1'
-        }}>
+        <h2 className="feature-title">
             {title}
         </h2>
         {description && (
-            <p style={{
-                fontSize: '1.1rem',
-                lineHeight: '1.6',
-                color: '#bdc3c7',
-                maxWidth: '600px'
-            }}>
+            <p className="feature-description">
                 {description}
             </p>
         )}
@@ -109,34 +76,29 @@ const Section = ({ title, description, Icon, customContent }) => (
 
 const Features = () => {
     return (
-        <div style={{ padding: '4rem 1rem', maxWidth: '800px', margin: '0 auto' }}>
+        <div className="features-container">
 
             {/* 1. What is BroTransfer? */}
-            <div style={{ textAlign: 'center', marginBottom: '6rem' }}>
-                <h2 style={{ fontSize: '3rem', fontWeight: 'bold', marginBottom: '1rem', color: '#ecf0f1' }}>
+            <div className="text-center m-b-rem-6">
+                <h2 className="large-title">
                     What is BroTransfer?
                 </h2>
-                {/* P2P Diagram SVG - Changed Orange Strokes to White/Grey for modern look */}
-                <div style={{ margin: '3rem 0', opacity: 0.9 }}>
+                <div className="feature-illustration">
                     <svg width="320" height="160" viewBox="0 0 320 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        {/* Computers */}
                         <path d="M40 90H100V120H40V90Z" stroke="#ecf0f1" strokeWidth="2" />
                         <path d="M30 120H110L115 130H25L30 120Z" stroke="#ecf0f1" strokeWidth="2" />
-
                         <path d="M220 90H280V120H220V90Z" stroke="#ecf0f1" strokeWidth="2" />
                         <path d="M210 120H290L295 130H205L210 120Z" stroke="#ecf0f1" strokeWidth="2" />
-
-                        {/* Arrow - Keep simple white/grey */}
                         <path d="M120 105H200" stroke="#ecf0f1" strokeWidth="2" strokeDasharray="4 4" />
                         <circle cx="160" cy="105" r="15" fill="#2c3e50" stroke="#ecf0f1" strokeWidth="2" />
                         <text x="160" y="108" fontSize="10" fill="#ecf0f1" textAnchor="middle" dominantBaseline="middle">P2P</text>
                     </svg>
                 </div>
 
-                <p style={{ fontSize: '1.2rem', lineHeight: '1.6', color: '#bdc3c7', marginBottom: '2rem' }}>
+                <p className="feature-description feature-text-large">
                     We are a free and independent peer-to-peer (P2P) file sharing service that prioritizes your privacy and keeps your data safe. We store nothing online: simply close your browser to stop sending.
                 </p>
-                <p style={{ fontSize: '1.2rem', lineHeight: '1.6', color: '#bdc3c7', fontStyle: 'italic' }}>
+                <p className="feature-description feature-text-italic">
                     Our mission is to make sure people keep their data safely into their own hands, as it should be.
                 </p>
             </div>
@@ -178,8 +140,8 @@ const Features = () => {
                 title="Do you still have questions?"
                 Icon={Icons.Chat}
                 customContent={
-                    <div style={{ color: '#bdc3c7', fontSize: '1.1rem', lineHeight: '1.6' }}>
-                        Check out our <a href="#" style={{ color: '#e67e22', textDecoration: 'underline' }}>frequently asked questions</a>. You can also <a href="#" style={{ color: '#e67e22', textDecoration: 'underline' }}>contact us</a> for any questions you might have.
+                    <div className="feature-description">
+                        Check out our <a href="#" className="feature-link">frequently asked questions</a>. You can also <a href="#" className="feature-link">contact us</a> for any questions you might have.
                     </div>
                 }
             />

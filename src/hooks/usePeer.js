@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Peer } from 'peerjs';
+import { logger } from '../utils/debugLog';
 
 /**
  * Hook to manage the PeerJS instance.
@@ -15,7 +16,7 @@ export const usePeer = (customId = null) => {
     const [retryCount, setRetryCount] = useState(0);
 
     const retry = () => {
-        console.log("Manual retry triggered");
+        logger.info("Manual retry triggered");
         setError(null);
         setStatus('loading');
         setRetryCount(prev => prev + 1);
@@ -24,7 +25,7 @@ export const usePeer = (customId = null) => {
     useEffect(() => {
         // If we have a customId, we might want to wait for it, OR we assume it's stable.
 
-        console.log("Initializing Peer with ID:", customId, "Attempt:", retryCount);
+        logger.info("Initializing Peer", { id: customId, attempt: retryCount });
 
         // If customId is provided, use it. Otherwise undefined (random)
         const peerConfig = {
@@ -39,26 +40,23 @@ export const usePeer = (customId = null) => {
         const newPeer = customId ? new Peer(customId, peerConfig) : new Peer(peerConfig);
 
         newPeer.on('open', (id) => {
-            console.log('Peer Open. ID:', id);
+            logger.success('Peer Open', id);
             setMyId(id);
             setStatus('ready');
             setError(null); // Clear any previous errors on successful connection
         });
 
         newPeer.on('error', (err) => {
-            console.error('Peer Error:', err);
-            // Ignore benign errors or handle specific ones
-            if (err.type === 'peer-unavailable') {
-                // Keep error, let UI handle it
-                setError(err);
+            logger.error('Peer Error', err);
+            
+            if (err.type === 'unavailable-id') {
+                setError(new Error("This connection code is already in use. Please try again."));
+                setStatus('error');
+            } else if (err.type === 'peer-unavailable') {
+                setError(new Error("Connection failed. The other peer might be offline or using a wrong code."));
                 setStatus('error');
             } else if (err.type === 'disconnected' || err.type === 'network' || err.type === 'server-error' || err.type === 'socket-error' || err.type === 'socket-closed') {
-                // These might be transient
-                console.log("Transient error detected. Attempting reconnect...");
-                // Don't immediately set error if we can reconnect, or set a "reconnecting" state?
-                // For now, show error but allow retry.
-                setError(err);
-                setStatus('error');
+                logger.warn("Transient error detected. Attempting reconnect...");
             } else {
                 setError(err);
                 setStatus('error');
@@ -67,7 +65,7 @@ export const usePeer = (customId = null) => {
 
         // Auto-reconnect on disconnect
         newPeer.on('disconnected', () => {
-            console.log('Peer disconnected from signaling server. Attempting reconnect...');
+            logger.warn('Peer disconnected from signaling server. Attempting reconnect...');
             // Don't change status to 'error' immediately, wait for reconnect
             // setStatus('disconnected'); 
 
@@ -75,7 +73,7 @@ export const usePeer = (customId = null) => {
             try {
                 newPeer.reconnect();
             } catch (err) {
-                console.error("Reconnect failed:", err);
+                logger.error("Reconnect failed", err);
                 setError(new Error("Connection lost. Please retry."));
                 setStatus('error');
             }
@@ -84,7 +82,7 @@ export const usePeer = (customId = null) => {
         newPeer.on('close', () => {
             // Only set closed if we didn't initiate a retry/destroy cycle
             if (!newPeer.destroyed) {
-                console.log("Peer destroyed/closed.");
+                logger.info("Peer destroyed/closed.");
                 setStatus('closed');
             }
         });
