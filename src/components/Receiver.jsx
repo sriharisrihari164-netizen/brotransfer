@@ -5,7 +5,11 @@ import { useFileReceiver } from '../hooks/useFileReceiver';
 
 const Receiver = ({ onReset }) => {
     const [code, setCode] = useState('');
-    const { peer, myId, status: peerStatus, error: peerError, retry } = usePeer();
+    const [forceRelay, setForceRelay] = useState(false);
+    
+    // Pass forceRelay to usePeer to enable/disable TURN relay policy
+    const { peer, status: peerStatus, error: peerError, retry } = usePeer(null, forceRelay);
+    
     const {
         fileMeta,
         transferStatus,
@@ -17,7 +21,7 @@ const Receiver = ({ onReset }) => {
         acceptFile,
         downloadFile,
         resetReceiver
-    } = useFileReceiver(peer, myId);
+    } = useFileReceiver(peer);
 
     const handleConnect = (e) => {
         e.preventDefault();
@@ -26,12 +30,10 @@ const Receiver = ({ onReset }) => {
     };
 
     const handleSoftReset = () => {
-        // "Receive Another" -> Keep Code, Keep Connection
         resetReceiver();
     };
 
     const handleNewSession = () => {
-        // "New Session" -> Reset everything, clear code
         if (onReset) onReset();
         else window.location.reload();
     };
@@ -54,6 +56,32 @@ const Receiver = ({ onReset }) => {
 
     return (
         <div className="animate-fade-in max-w-600 m-auto">
+            
+            {/* Signaling Status Badge */}
+            <div style={{ 
+                display: 'flex', 
+                justifyContent: 'flex-end', 
+                marginBottom: '1rem', 
+                fontSize: '0.75rem',
+                opacity: 0.8
+            }}>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.3rem 0.6rem',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '20px'
+                }}>
+                    <div style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        background: peerStatus === 'ready' ? '#4ade80' : peerStatus === 'error' ? '#f87171' : '#fbbf24'
+                    }}></div>
+                    <span>{peerStatus === 'ready' ? 'Signaling: Connected' : peerStatus === 'loading' ? 'Signaling: Connecting...' : 'Signaling: Offline'}</span>
+                </div>
+            </div>
 
             {/* 1. Idle / Entry State */}
             {transferStatus === 'idle' && (
@@ -85,6 +113,18 @@ const Receiver = ({ onReset }) => {
                     >
                         {peerStatus === 'loading' ? 'Initializing...' : 'Receive'}
                     </button>
+
+                    <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontSize: '0.85rem', opacity: 0.8 }}>
+                        <input 
+                            type="checkbox" 
+                            id="force-relay" 
+                            checked={forceRelay} 
+                            onChange={(e) => setForceRelay(e.target.checked)} 
+                        />
+                        <label htmlFor="force-relay" style={{ cursor: 'pointer' }}>
+                            Force Relay (Hotspot Fix)
+                        </label>
+                    </div>
                 </form>
             )}
 
@@ -190,9 +230,34 @@ const Receiver = ({ onReset }) => {
             {/* 4. Error State */}
             {transferStatus === 'error' && (
                 <div className="glass-card text-center error-border">
-                    <h2 className="error-text" style={{ marginBottom: '1rem' }}>Error</h2>
-                    <p>{errorMsg}</p>
-                    <button className="glass-btn" onClick={handleSoftReset} style={{ marginTop: '1rem' }}>Try Again</button>
+                    <h2 className="error-text" style={{ marginBottom: '1rem' }}>Connection Failed</h2>
+                    <p style={{ whiteSpace: 'pre-line', textAlign: 'left', display: 'inline-block', maxWidth: '100%', margin: '0 auto', fontSize: '0.9rem', opacity: 0.9 }}>
+                        {errorMsg}
+                    </p>
+
+                    <button 
+                        className="glass-btn" 
+                        style={{ marginTop: '1rem', fontSize: '0.8rem', borderColor: '#4ade80', color: '#4ade80' }}
+                        onClick={() => {
+                            const logs = JSON.parse(localStorage.getItem('debug_logs') || '[]');
+                            const text = logs.map(l => `[${l.time}] [${l.type}] ${l.message}`).join('\n');
+                            navigator.clipboard.writeText(text);
+                            alert("Logs copied!");
+                        }}
+                    >
+                        Copy Diagnostics to Clipboard
+                    </button>
+
+                    <div className="hotspot-troubleshooting" style={{ textAlign: 'left', marginTop: '1.5rem', padding: '1rem', background: 'rgba(255,165,0,0.1)', borderRadius: '8px', border: '1px solid rgba(255,165,0,0.2)' }}>
+                        <h4 style={{ color: '#ffa500', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Using a Mobile Hotspot?</h4>
+                        <ul style={{ fontSize: '0.85rem', color: '#ffcc80', paddingLeft: '1.2rem', margin: 0 }}>
+                            <li style={{ marginBottom: '0.3rem' }}><strong>Symmetric NAT:</strong> 4G/5G networks often block Peer-to-Peer. We've enabled a relay (TURN) to help bypass this.</li>
+                            <li style={{ marginBottom: '0.3rem' }}><strong>Stay Connected:</strong> Keep this page open on BOTH devices while connecting.</li>
+                            <li><strong>Same Network:</strong> Ensure your Laptop is connected to the Phone's hotspot and not another Wi-Fi.</li>
+                        </ul>
+                    </div>
+
+                    <button className="glass-btn" onClick={handleSoftReset} style={{ marginTop: '1.5rem', width: '100%' }}>Try Again</button>
                 </div>
             )}
         </div>

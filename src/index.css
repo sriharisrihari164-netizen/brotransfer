@@ -28,12 +28,13 @@ body {
   background: var(--bg-gradient);
   background-attachment: fixed;
   color: var(--text-primary);
-  display: flex;
-  place-items: center;
-  justify-content: center;
+  overflow-x: hidden;
 }
 
 #root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   width: 100%;
 }
 
@@ -119,20 +120,20 @@ body {
 
 /* Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(0, 0, 0, 0.2);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.4);
 }
 
 /* Dropzone Hover Animation */
@@ -209,12 +210,12 @@ body {
 /* Hero Section Styles */
 .hero-container {
   text-align: center;
-  margin-top: 3rem;
-  margin-bottom: 2rem;
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .hero-title {
-  font-size: 4rem;
+  font-size: 3.2rem;
   margin-bottom: 0.5rem;
   background: linear-gradient(to right, #ffffff, #a0a0a0);
   -webkit-background-clip: text;
@@ -223,7 +224,7 @@ body {
 }
 
 .hero-subtitle {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   color: var(--text-secondary);
   opacity: 0.8;
 }

@@ -18,6 +18,13 @@ export const addLog = (message, type = 'info') => {
     if (logs.length > 50) logs.shift();
     logs.push(logEntry);
 
+    // Persist to localStorage for cross-page/cross-refresh retrieval
+    try {
+        localStorage.setItem('debug_logs', JSON.stringify(logs));
+    } catch {
+        // Silently fail if storage full
+    }
+
     // Notify listeners
     listeners.forEach(listener => listener(logs));
 

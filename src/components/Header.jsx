@@ -1,7 +1,8 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import Logo from './Logo';
 
-const Header = ({ onToggleDebug }) => {
+const Header = () => {
   return (
     <header style={{
       display: 'flex',
@@ -10,9 +11,9 @@ const Header = ({ onToggleDebug }) => {
       padding: '1.5rem 0',
       marginBottom: '2rem'
     }}>
-      <div 
-        onClick={onToggleDebug} 
-        style={{ display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer' }}
+      <Link 
+        to="/" 
+        style={{ display: 'flex', alignItems: 'center', gap: '1rem', textDecoration: 'none' }}
       >
         <Logo size={48} />
         <span style={{
@@ -25,9 +26,7 @@ const Header = ({ onToggleDebug }) => {
         }}>
           BroTransfer
         </span>
-      </div>
-
-
+      </Link>
     </header>
   );
 };

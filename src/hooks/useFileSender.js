@@ -2,8 +2,8 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import FileWorker from '../workers/fileWorker.js?worker';
 import { logger } from '../utils/debugLog';
 
-const CHUNK_SIZE = 64 * 1024; // Reverted to 64KB for maximum reliability
-const MAX_BUFFER_AMOUNT = 64 * 1024 * 4; // Tighter buffer control
+const CHUNK_SIZE = 64 * 1024; // 64KB for maximum reliability
+const MAX_BUFFER_AMOUNT = 64 * 1024 * 4; // 256KB buffer limit
 
 export const useFileSender = (peer) => {
     const [file, setFile] = useState(null);
@@ -18,35 +18,9 @@ export const useFileSender = (peer) => {
     const lastProgressTimeRef = useRef(0);
     const lastOffsetRef = useRef(0);
     const workerRef = useRef(null);
-
-
-    // Initialize Worker
-    // Keep latest ref for worker callback
     const handleChunkFromWorkerRef = useRef(null);
 
-    // Initialize Worker
-    useEffect(() => {
-        const worker = new FileWorker();
-        workerRef.current = worker;
-
-        worker.onmessage = (e) => {
-            const { type, data, offset, error } = e.data;
-            if (type === 'chunk_data') {
-                if (handleChunkFromWorkerRef.current) {
-                    handleChunkFromWorkerRef.current(data, offset);
-                }
-            } else if (type === 'error') {
-                logger.error("Worker error", error);
-                setTransferStatus('error');
-            }
-        };
-
-        return () => {
-            worker.terminate();
-        };
-
-    }, [peer]);
-
+    // 1. Send chunk request to Web Worker
     const requestNextChunk = useCallback((currentFile, offset) => {
         if (!workerRef.current) return;
         workerRef.current.postMessage({
@@ -57,32 +31,7 @@ export const useFileSender = (peer) => {
         });
     }, []);
 
-    // Recursive function using Ref to avoid dependency cycle
-    // Recursive function using Ref to avoid dependency cycle
-    const waitForBufferRef = useRef(null);
-
-    useEffect(() => {
-        waitForBufferRef.current = (conn, currentFile, nextOffset) => {
-            if (!conn.open) return;
-            if (conn.bufferedAmount <= MAX_BUFFER_AMOUNT / 2) {
-                requestNextChunk(currentFile, nextOffset);
-            } else {
-                setTimeout(() => {
-                    if (waitForBufferRef.current) {
-                        waitForBufferRef.current(conn, currentFile, nextOffset);
-                    }
-                }, 50);
-            }
-        };
-    }, [requestNextChunk]);
-
-    // Stable callback wrapper
-    const waitForBuffer = useCallback((conn, currentFile, nextOffset) => {
-        if (waitForBufferRef.current) {
-            waitForBufferRef.current(conn, currentFile, nextOffset);
-        }
-    }, []);
-
+    // 2. Update transfer speed and progress
     const updateProgress = useCallback((totalSize) => {
         const now = Date.now();
         if (now - lastProgressTimeRef.current >= 200) {
@@ -100,6 +49,24 @@ export const useFileSender = (peer) => {
         }
     }, []);
 
+    const getBufferedAmount = (conn) => {
+        return conn?.dataChannel?.bufferedAmount ?? conn?.bufferSize ?? conn?.bufferedAmount ?? 0;
+    };
+
+    // 3. Buffer backpressure handler
+    const waitForBuffer = useCallback(function checkBuffer(conn, currentFile, nextOffset) {
+        if (!conn || !conn.open) return;
+        const buffered = getBufferedAmount(conn);
+        if (buffered <= MAX_BUFFER_AMOUNT / 2) {
+            requestNextChunk(currentFile, nextOffset);
+        } else {
+            setTimeout(() => {
+                checkBuffer(conn, currentFile, nextOffset);
+            }, 50);
+        }
+    }, [requestNextChunk]);
+
+    // 4. Chunk callback from worker
     const handleChunkFromWorker = useCallback((chunkData, offset) => {
         const conn = connectionRef.current;
         const currentFile = fileRef.current;
@@ -124,18 +91,42 @@ export const useFileSender = (peer) => {
             return;
         }
 
-        if (conn.bufferedAmount > MAX_BUFFER_AMOUNT) {
+        const buffered = getBufferedAmount(conn);
+        if (buffered > MAX_BUFFER_AMOUNT) {
             waitForBuffer(conn, currentFile, nextOffset);
         } else {
             requestNextChunk(currentFile, nextOffset);
         }
     }, [requestNextChunk, waitForBuffer, updateProgress]);
 
-    // Keep Ref updated
+    // Keep handleChunkFromWorkerRef up to date
     useEffect(() => {
         handleChunkFromWorkerRef.current = handleChunkFromWorker;
     }, [handleChunkFromWorker]);
 
+    // Initialize Worker
+    useEffect(() => {
+        const worker = new FileWorker();
+        workerRef.current = worker;
+
+        worker.onmessage = (e) => {
+            const { type, data, offset, error } = e.data;
+            if (type === 'chunk_data') {
+                if (handleChunkFromWorkerRef.current) {
+                    handleChunkFromWorkerRef.current(data, offset);
+                }
+            } else if (type === 'error') {
+                logger.error("Worker error", error);
+                setTransferStatus('error');
+            }
+        };
+
+        return () => {
+            worker.terminate();
+        };
+    }, []);
+
+    // 5. Start transfer by sending metadata
     const startTransfer = useCallback((conn) => {
         const currentFile = fileRef.current;
         if (!currentFile) return;
@@ -154,40 +145,37 @@ export const useFileSender = (peer) => {
 
         logger.info("Metadata sent. Waiting for receiver acceptance...");
         setTransferStatus('waiting-for-approval');
-    }, []); // No dependencies needed as it relies on refs/setters
+    }, []);
 
-
-
-
-    // Listen for incoming connections
+    // 6. Listen for incoming connections from receiver
     useEffect(() => {
         if (!peer) return;
 
         const handleConnection = (conn) => {
             logger.info("Sender received connection from", conn.peer);
 
-            // If no file is selected, we shouldn't really accept, or we might be in weird state.
-            // But with the UI flow, we shouldn't reach here easily without a file.
-            // Using ref to ensure we get the latest file instance without re-binding listener.
             if (!fileRef.current) {
                 logger.warn("Connection received but no file selected. Closing.");
                 conn.close();
                 return;
             }
 
-            // Validate connection? For now accept all.
             connectionRef.current = conn;
             setTransferStatus('connecting');
 
-            conn.on('open', () => {
-                logger.info("Connection opened! Starting transfer...");
-                setTransferStatus('transferring');
+            const onConnectionOpen = () => {
+                logger.info("Connection opened! Sending metadata...");
                 startTransfer(conn);
-            });
+            };
+
+            if (conn.open) {
+                onConnectionOpen();
+            } else {
+                conn.on('open', onConnectionOpen);
+            }
 
             conn.on('close', () => {
                 logger.info("Connection closed.");
-                // Only react if this is the active connection
                 if (connectionRef.current === conn) {
                     setTransferStatus(prev => prev === 'completed' ? prev : 'error');
                 }
@@ -196,11 +184,9 @@ export const useFileSender = (peer) => {
             conn.on('data', (data) => {
                 if (data && data.type === 'ack-end') {
                     logger.success("Received ACK-END from receiver. Transfer complete.");
-                    // Only now do we consider it completed
                     setTransferStatus('completed');
                     setProgress(100);
-                }
-                else if (data && data.type === 'ack-start') {
+                } else if (data && data.type === 'ack-start') {
                     logger.info("Receiver accepted file. Starting transfer...");
                     setTransferStatus('transferring');
                     if (fileRef.current) {
@@ -221,7 +207,6 @@ export const useFileSender = (peer) => {
         return () => {
             peer.off('connection', handleConnection);
         };
-
     }, [peer, requestNextChunk, startTransfer]);
 
     const selectFile = (selectedFile) => {
@@ -230,7 +215,6 @@ export const useFileSender = (peer) => {
         setTransferStatus('idle');
         setProgress(0);
         setSpeed(0);
-        // Note: Changing file triggers useEffect ensuring listening is active if peer exists
     };
 
     const resetSender = () => {
@@ -249,7 +233,6 @@ export const useFileSender = (peer) => {
         transferStatus,
         progress,
         speed,
-        // Removed connectToReceiver
         selectFile,
         resetSender
     };

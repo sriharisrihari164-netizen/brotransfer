@@ -1,118 +1,152 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Peer } from 'peerjs';
 import { logger } from '../utils/debugLog';
 
 /**
  * Hook to manage the PeerJS instance.
- * @returns {Object} { peer, myId, status, error }
+ * @param {string} customId - Optional custom ID to use.
+ * @param {boolean} forceRelay - Whether to force usage of TURN (relay only).
+ * @returns {Object} { peer, myId, status, error, retry }
  */
-export const usePeer = (customId = null) => {
+export const usePeer = (customId = null, forceRelay = false) => {
     const [peer, setPeer] = useState(null);
     const [myId, setMyId] = useState('');
-    const [status, setStatus] = useState('loading'); // loading, ready, error
+    const [status, setStatus] = useState('loading'); // loading, ready, error, closed
     const [error, setError] = useState(null);
-
     const [retryCount, setRetryCount] = useState(0);
 
-    const retry = () => {
+    const peerRef = useRef(null);
+
+    const retry = useCallback(() => {
         logger.info("Manual retry triggered");
         setError(null);
         setStatus('loading');
         setRetryCount(prev => prev + 1);
-    };
+    }, []);
 
     useEffect(() => {
-        // If we have a customId, we might want to wait for it, OR we assume it's stable.
+        if (peerRef.current) return;
 
-        logger.info("Initializing Peer", { id: customId, attempt: retryCount });
+        peerRef.current = 'initializing';
 
-        // If customId is provided, use it. Otherwise undefined (random)
-        const peerOptions = {
-            host: '0.peerjs.com',
-            port: 443,
-            secure: true,
-            debug: 1, // 0: no logs, 1: errors, 2: errors+warnings, 3: all
-            config: {
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:global.stun.twilio.com:3478' }
-                ]
-            }
-        };
+        const delayTimer = setTimeout(() => {
+            logger.info("Initializing Peer instance", { id: customId, relay: forceRelay });
 
-        const newPeer = customId ? new Peer(customId, peerOptions) : new Peer(peerOptions);
+            const peerOptions = {
+                debug: 1, 
+                host: '0.peerjs.com',
+                port: 443,
+                secure: true,
+                pingInterval: 5000,
+                config: {
+                    iceTransportPolicy: forceRelay ? 'relay' : 'all',
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' },
+                        { urls: 'stun:stun.cloudflare.com:3478' },
+                        {
+                            urls: [
+                                "turn:eu-0.turn.peerjs.com:3478",
+                                "turn:us-0.turn.peerjs.com:3478"
+                            ],
+                            username: "peerjs",
+                            credential: "peerjsp"
+                        },
+                        {
+                            urls: [
+                                "turn:openrelay.metered.ca:80",
+                                "turn:openrelay.metered.ca:443",
+                                "turn:openrelay.metered.ca:443?transport=tcp",
+                                "turns:openrelay.metered.ca:443?transport=tcp"
+                            ],
+                            username: "openrelayproject",
+                            credential: "openrelayproject"
+                        }
+                    ],
+                    iceCandidatePoolSize: 2 
+                }
+            };
 
-        newPeer.on('open', (id) => {
-            logger.success('Peer Ready!', id);
-            setMyId(id);
-            setStatus('ready');
-            setError(null);
-        });
+            const newPeer = customId ? new Peer(customId, peerOptions) : new Peer(peerOptions);
+            peerRef.current = newPeer;
 
-        newPeer.on('error', (err) => {
-            logger.error(`PeerJS Error Level: ${err.type}`, err);
-            
-            let userFriendlyError = err.message || "An unknown connection error occurred.";
+            newPeer.on('open', (id) => {
+                logger.success('Peer Ready!', id);
+                setMyId(id);
+                setStatus('ready');
+                setError(null);
+                setPeer(newPeer);
+            });
 
-            switch (err.type) {
-                case 'unavailable-id':
-                    userFriendlyError = "This connection code is already being used. Please refresh to try another.";
-                    break;
-                case 'peer-unavailable':
-                    userFriendlyError = "Target peer not found. Check if the code is correct and the sender is still online.";
-                    break;
-                case 'network':
-                    userFriendlyError = "Network error. Please check your internet connection.";
-                    break;
-                case 'server-error':
-                case 'socket-error':
-                    userFriendlyError = "Connection to signaling server failed. The service might be temporarily down.";
-                    break;
-                case 'ssl-unavailable':
-                    userFriendlyError = "Secure connection (SSL) is required but not available.";
-                    break;
-                default:
-                    // Keep the original message if not specifically mapped
-                    break;
-            }
+            newPeer.on('error', (err) => {
+                logger.error(`PeerJS Error: ${err.type}`, err);
+                
+                let userFriendlyError = err.message || "An unknown error occurred.";
 
-            setError(new Error(userFriendlyError));
-            setStatus('error');
-        });
+                switch (err.type) {
+                    case 'unavailable-id':
+                        userFriendlyError = "Connection code busy or unavailable. Please retry or generate a new code.";
+                        setError(new Error(userFriendlyError));
+                        setStatus('error');
+                        break;
+                    case 'peer-unavailable':
+                        // Non-fatal: local peer is still connected and ready.
+                        // Connection-level error is handled by the receiver/sender connection listeners.
+                        logger.warn("Target peer not found. Check the code or ensure sender is active.");
+                        break;
+                    case 'network':
+                        userFriendlyError = "Network issue. Please check your connection.";
+                        setError(new Error(userFriendlyError));
+                        setStatus('error');
+                        break;
+                    case 'server-error':
+                    case 'socket-error':
+                    case 'socket-closed':
+                        userFriendlyError = "Signaling server disconnected. Reconnecting...";
+                        setError(new Error(userFriendlyError));
+                        setStatus('error');
+                        break;
+                    default:
+                        logger.warn(`Non-fatal PeerJS error: ${err.type}`);
+                        break;
+                }
+            });
 
-        // Auto-reconnect on disconnect
-        newPeer.on('disconnected', () => {
-            logger.warn('Peer disconnected from signaling server. Attempting reconnect...');
-            // Don't change status to 'error' immediately, wait for reconnect
-            // setStatus('disconnected'); 
+            newPeer.on('disconnected', () => {
+                logger.warn('Peer disconnected from signaling. Reconnecting...');
+                try {
+                    if (newPeer && !newPeer.destroyed) {
+                        newPeer.reconnect();
+                    }
+                } catch (err) {
+                    logger.error("Reconnect attempt failed", err);
+                }
+            });
 
-            // Try to reconnect
-            try {
-                newPeer.reconnect();
-            } catch (err) {
-                logger.error("Reconnect failed", err);
-                setError(new Error("Connection lost. Please retry."));
-                setStatus('error');
-            }
-        });
-
-        newPeer.on('close', () => {
-            // Only set closed if we didn't initiate a retry/destroy cycle
-            if (!newPeer.destroyed) {
+            newPeer.on('close', () => {
                 logger.info("Peer destroyed/closed.");
                 setStatus('closed');
-            }
-        });
-
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setPeer(newPeer);
+                setPeer(null);
+            });
+        }, 300); 
 
         return () => {
-            // Clean up: destroy peer when hook unmounts or prior to re-running effect
-            newPeer.destroy();
+            clearTimeout(delayTimer);
+            if (peerRef.current && peerRef.current !== 'initializing') {
+                logger.info("Destroying Peer instance...");
+                peerRef.current.destroy();
+                setPeer(null);
+            }
+            peerRef.current = null;
         };
-    }, [customId, retryCount]);
+    }, [customId, retryCount, retry, forceRelay]);
 
-    return { peer, myId, status, error, retry };
+    return { 
+        peer, 
+        myId, 
+        status, 
+        error, 
+        retry 
+    };
 };

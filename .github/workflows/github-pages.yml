@@ -28,7 +28,9 @@ jobs:
         run: npm ci
       
       - name: Build application
-        run: npm run build -- --mode production
+        run: |
+          npm run build -- --mode production
+          cp dist/index.html dist/404.html
       
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
@@ -36,3 +38,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
           cname: brotransfer.in
+ 

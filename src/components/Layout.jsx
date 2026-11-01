@@ -1,18 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Header from './Header';
 import { Outlet, Link } from 'react-router-dom';
-import DebugLogger from './DebugLogger';
 
 const Layout = () => {
-    const [showDebug, setShowDebug] = useState(false);
-
     return (
         <div className="app-container">
-            <Header onToggleDebug={() => setShowDebug(s => !s)} />
+            <Header />
             <main className="main-content">
                 <Outlet />
             </main>
-            {showDebug && <DebugLogger />}
             <footer style={{
                 textAlign: 'center',
                 padding: '1rem',
